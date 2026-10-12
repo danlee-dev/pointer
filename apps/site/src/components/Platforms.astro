@@ -1,0 +1,68 @@
+---
+// 플랫폼 네 줄. 링크가 생기면 site.ts 만 고치면 된다.
+import Phrases from './Phrases.astro';
+import { site, type Lang } from '../site';
+import { landing } from '../i18n/landing';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = landing[lang];
+const p = t.platforms;
+
+const rows = [
+  { id: 'mac', name: 'Mac', desc: p.rows.mac, href: site.downloads.mac, cta: t.download.mac, soon: p.soon },
+  { id: 'windows', name: 'Windows', desc: p.rows.windows, href: site.downloads.windows, cta: t.download.windows, soon: p.soon },
+  { id: 'ios', name: 'iPhone', desc: p.rows.ios, href: site.appStore, cta: t.download.ios, soon: p.iosSoon },
+  { id: 'android', name: 'Android', desc: p.rows.android, href: null, cta: '', soon: p.noInstall },
+];
+---
+
+<section class="section" id="platforms" aria-labelledby="platforms-title">
+  <div class="wrap">
+    <h2 class="h2" id="platforms-title" data-reveal><Phrases text={p.title} /></h2>
+    <ul class="plat-list" data-reveal>
+      {
+        rows.map((r) => (
+          <li class="plat">
+            <p class="plat-name">{r.name}</p>
+            <p class="plat-desc">{r.desc}</p>
+            <p class="plat-status">
+              {r.href ? (
+                <a class="pill pill-secondary" href={r.href}>
+                  {r.cta}
+                </a>
+              ) : (
+                <span class:list={['plat-soon', { ready: r.id === 'android' }]}>{r.soon}</span>
+              )}
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .plat-list {
+    margin-top: clamp(32px, 5vw, 56px);
+    padding: clamp(8px, 1.5vw, 12px) clamp(20px, 3vw, 36px);
+    border-radius: var(--r-xl);
+    background: var(--bg-raised);
+  }
+  .plat {
+    display: grid;
+    gap: 6px;
+    padding: 24px 0;
+  }
+  @media (min-width: 960px) {
+    .plat { grid-template-columns: minmax(0, 15rem) minmax(0, 1fr) 11rem; align-items: center; gap: 32px; padding: 28px 0; }
+  }
+  .plat-name { font-size: clamp(1.75rem, 1.4rem + 1.3vw, 2.375rem); font-weight: 300; letter-spacing: var(--tracking-display); line-height: 1.15; }
+  .plat-desc { color: var(--fg-muted); line-height: 1.6; max-width: 34rem; }
+  .plat-status { margin-top: 6px; }
+  @media (min-width: 960px) { .plat-status { margin-top: 0; justify-self: end; } }
+  .plat-soon { font-size: 0.9375rem; font-weight: 600; color: var(--fg-muted); white-space: nowrap; }
+  .plat-soon.ready { color: var(--fg); }
+</style>

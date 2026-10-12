@@ -1,0 +1,101 @@
+---
+import Phrases from './Phrases.astro';
+import Base from '../layouts/Base.astro';
+import Demo from './Demo.astro';
+import Downloads from './Downloads.astro';
+import Steps from './Steps.astro';
+import Features from './Features.astro';
+import Platforms from './Platforms.astro';
+import FaqList from './FaqList.astro';
+import { landing } from '../i18n/landing';
+import { localePath, type Lang } from '../site';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = landing[lang];
+---
+
+<Base lang={lang} path="/" title={t.meta.title} description={t.meta.description}>
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap">
+      <div class="hero-head">
+        <h1 class="display" id="hero-title">
+          <Phrases text={t.hero.title} />
+        </h1>
+        <div class="hero-side">
+          <p class="lead hero-sub">{t.hero.sub}</p>
+          <Downloads lang={lang} />
+          <p class="hero-android">{t.hero.android}</p>
+        </div>
+      </div>
+      <Demo lang={lang} />
+    </div>
+  </section>
+
+  <Steps lang={lang} />
+
+  <Features lang={lang} />
+
+  <section class="section privacy-band" aria-labelledby="privacy-title">
+    <div class="wrap pb" data-reveal>
+      <svg class="pb-art" viewBox="0 0 280 72" aria-hidden="true">
+        <rect class="pb-dev" x="8" y="14" width="74" height="46" rx="7" />
+        <rect class="pb-base" x="0" y="60" width="90" height="5" rx="2.5" />
+        <rect class="pb-dev" x="222" y="8" width="34" height="60" rx="9" />
+        <path class="pb-link" d="M100 38H210" />
+        <circle class="pb-pulse" cx="100" cy="38" r="3.5" />
+      </svg>
+      <h2 class="h2" id="privacy-title"><Phrases text={t.privacy.title} /></h2>
+      <p class="lead">{t.privacy.body}</p>
+      <a class="text-link" href={localePath(lang, '/privacy')}>{t.privacy.link}</a>
+    </div>
+  </section>
+
+  <Platforms lang={lang} />
+
+  <section class="section" id="faq" aria-labelledby="faq-title">
+    <div class="wrap faq-wrap">
+      <div class="faq-head" data-reveal>
+        <h2 class="h2" id="faq-title">{t.faq.title}</h2>
+        <a class="text-link" href={localePath(lang, '/support')}>{t.faq.more}</a>
+      </div>
+      <div data-reveal>
+        <FaqList items={t.faq.items} />
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero { padding-top: clamp(28px, 6vw, 72px); overflow-x: clip; }
+  .hero-head { display: grid; gap: 24px; }
+  .hero-side { display: grid; gap: 20px; justify-items: start; max-width: 32rem; }
+  .hero-sub { color: var(--fg); }
+  .hero-android { font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.6; }
+  @media (min-width: 1024px) {
+    .hero-head { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); align-items: end; gap: 64px; }
+    .hero-side { padding-bottom: 10px; }
+  }
+
+  .pb { display: grid; justify-items: center; gap: 22px; text-align: center; }
+  .pb .h2 { max-width: 16em; }
+  .pb .lead { max-width: 34rem; }
+  .pb-art { width: 220px; height: auto; margin-bottom: 8px; }
+  .pb-dev { fill: none; stroke: var(--fg); stroke-width: 1.6; }
+  .pb-base { fill: var(--fg); }
+  .pb-link { stroke: var(--fg-subtle); stroke-width: 1.6; stroke-dasharray: 1 7; stroke-linecap: round; }
+  .pb-pulse { fill: var(--fg); }
+  @media (prefers-reduced-motion: no-preference) {
+    .pb-pulse { animation: travel 2.8s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; }
+  }
+  @keyframes travel { to { transform: translateX(110px); } }
+
+  .faq-wrap { display: grid; gap: 32px; }
+  .faq-head { display: grid; gap: 16px; align-content: start; justify-items: start; }
+  @media (min-width: 960px) {
+    .faq-wrap { grid-template-columns: minmax(0, 4fr) minmax(0, 7fr); gap: 64px; }
+    .faq-head { position: sticky; top: 32px; align-self: start; }
+  }
+</style>

@@ -1,0 +1,73 @@
+---
+// 질문 목록. 기본 HTML details 라서 스크립트 없이 열리고 닫히며, 닫혀 있어도 검색엔진은 답을 읽는다.
+interface Props {
+  items: { q: string; a: string }[];
+}
+const { items } = Astro.props;
+---
+
+<div class="faq">
+  {
+    items.map((it) => (
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">{it.q}</span>
+          <span class="faq-icon" aria-hidden="true" />
+        </summary>
+        <p class="faq-a">{it.a}</p>
+      </details>
+    ))
+  }
+</div>
+
+<style>
+  /* 글자 줄이 페이지 여백과 맞도록, 눌림 바탕이 생기는 여백만큼 바깥으로 뺀다 */
+  .faq { display: grid; gap: 4px; margin-inline: -16px; }
+  @media (min-width: 760px) { .faq { margin-inline: -20px; } }
+  .faq-item { border-radius: var(--r-lg); transition: background-color 0.2s; }
+  .faq-item[open] { background: var(--bg-raised); }
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 18px 16px;
+    border-radius: var(--r-lg);
+    cursor: pointer;
+    list-style: none;
+    transition: background-color 0.15s;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary:hover { background: var(--surface); }
+  .faq-item[open] summary:hover { background: transparent; }
+  summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .faq-q { font-size: 1.0625rem; font-weight: 600; line-height: 1.45; }
+  .faq-icon {
+    position: relative;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--surface);
+    transition: transform 0.3s var(--ease-out), background-color 0.2s;
+  }
+  .faq-icon::before,
+  .faq-icon::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 12px;
+    height: 1.8px;
+    margin: -0.9px 0 0 -6px;
+    border-radius: 1px;
+    background: var(--fg);
+  }
+  .faq-icon::after { transform: rotate(90deg); }
+  .faq-item[open] .faq-icon { transform: rotate(45deg); }
+  .faq-a { padding: 0 16px 22px; max-width: 44rem; color: var(--fg-muted); line-height: 1.7; }
+  @media (min-width: 760px) {
+    summary { padding: 18px 20px; }
+    .faq-a { padding: 0 20px 22px; }
+  }
+</style>

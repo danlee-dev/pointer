@@ -16,5 +16,12 @@ apps/mobile/ios/
 apps/mobile/android/
 apps/mobile/.expo/
 
+# Astro 가 만드는 타입·개발 로그, Vercel 연결 정보
+.astro/
+.vercel/
+
+# 기기 3D 모델 원본 (렌더링에만 쓴다. 맥북은 재배포 금지 라이선스)
+apps/site/.models/
+
 # Claude Code 작업 폴더 (병렬 작업용 worktree)
 .claude/worktrees/

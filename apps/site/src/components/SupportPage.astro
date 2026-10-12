@@ -1,0 +1,85 @@
+---
+import Base from '../layouts/Base.astro';
+import FaqList from './FaqList.astro';
+import Icon from './Icon.astro';
+import { support } from '../i18n/support';
+import { site, type Lang } from '../site';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = support[lang];
+---
+
+<Base lang={lang} path="/support" title={t.meta.title} description={t.meta.description}>
+  <div class="doc wrap">
+    <header class="doc-head">
+      <h1 class="h2">{t.title}</h1>
+      <p class="lead">{t.intro}</p>
+      <p><a class="text-link" href={site.support} rel="noopener">{t.contact.cta}</a></p>
+    </header>
+
+    <div class="support">
+      <nav class="topics" aria-label={t.topicsLabel}>
+        <ol>
+          {
+            t.topics.map((topic) => (
+              <li>
+                <a href={`#${topic.id}`}>{topic.h}</a>
+              </li>
+            ))
+          }
+          <li><a href="#contact">{t.contact.h}</a></li>
+        </ol>
+      </nav>
+
+      <div class="support-body">
+        {
+          t.topics.map((topic) => (
+            <section class="topic" id={topic.id} aria-labelledby={`${topic.id}-h`}>
+              <h2 class="topic-h" id={`${topic.id}-h`}>{topic.h}</h2>
+              <FaqList items={topic.items} />
+            </section>
+          ))
+        }
+
+        <section class="contact" id="contact" aria-labelledby="contact-h">
+          <h2 class="h3" id="contact-h">{t.contact.h}</h2>
+          <p class="body-copy">{t.contact.body}</p>
+          <a class="pill pill-primary" href={site.support} rel="noopener">
+            {t.contact.cta}
+            <Icon name="arrow" class="contact-arrow" />
+          </a>
+          <p class="contact-note">{t.contact.note}</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .support { margin-top: clamp(40px, 6vw, 72px); display: grid; gap: 40px; }
+  .topics { display: none; }
+  @media (min-width: 960px) {
+    .support { grid-template-columns: 240px minmax(0, 1fr); gap: 72px; }
+    .topics { display: block; position: sticky; top: 32px; align-self: start; }
+    .topics ol { display: grid; gap: 2px; }
+    .topics a { display: block; padding: 6px 12px; margin-left: -12px; border-radius: var(--r-sm); color: var(--fg-muted); font-size: 0.9375rem; transition: background-color 0.15s, color 0.15s; }
+    .topics a:hover { background: var(--surface); color: var(--fg); }
+  }
+  .support-body { display: grid; gap: 56px; max-width: 46rem; }
+  .topic { display: grid; gap: 12px; scroll-margin-top: 24px; }
+  .topic-h { font-size: 1.375rem; font-weight: 600; letter-spacing: var(--tracking-title); }
+  .contact {
+    display: grid;
+    gap: 18px;
+    justify-items: start;
+    padding: clamp(24px, 4vw, 40px);
+    border-radius: var(--r-xl);
+    background: var(--bg-raised);
+    scroll-margin-top: 24px;
+  }
+  .contact :global(.contact-arrow) { width: 18px; height: 18px; margin-right: -4px; }
+  .contact-note { font-size: 0.875rem; color: var(--fg-muted); }
+</style>

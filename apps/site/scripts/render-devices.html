@@ -1,0 +1,173 @@
+<!-- 첫 화면 기기 렌더러. 쓰는 법은 render-devices.mjs 맨 위. 정면·망원으로 찍고, 화면과 베젤을 반사 없는 검정으로 바꾼 뒤 화면 네 모서리의 이미지 좌표와 모서리 반지름을 같이 저장한다. -->
+<!doctype html><meta charset="utf-8">
+<style>body{margin:0;background:#e7e5e4;font:12px system-ui} .row{display:flex;gap:12px;padding:12px;align-items:flex-start} img,canvas{max-width:48vw;background:repeating-conic-gradient(#d6d3d1 0 25%,#f5f5f4 0 50%) 0 0/16px 16px}</style>
+<div class="row" id="out"></div>
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+
+// 화면 판의 네 모서리 (판 위 좌표로 잰 바운딩 사각형). 둥근 모서리 바깥까지 감싼다.
+function screenCorners(mesh) {
+  mesh.updateMatrixWorld(true);
+  const pos = mesh.geometry.attributes.position;
+  const pts = [];
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) pts.push(v.fromBufferAttribute(pos, i).applyMatrix4(mesh.matrixWorld).clone());
+  const c = pts.reduce((a, p) => a.add(p), new THREE.Vector3()).multiplyScalar(1 / pts.length);
+  // 판의 법선: 공분산이 가장 작은 방향 (거듭제곱법 대신 세 점 외적 평균으로 근사)
+  const n = new THREE.Vector3();
+  for (let i = 0; i + 2 < pts.length; i += 3) {
+    const a = pts[i].clone().sub(pts[i + 1]), b = pts[i + 2].clone().sub(pts[i + 1]);
+    const cr = a.cross(b);
+    if (cr.lengthSq() > 1e-14) { if (n.lengthSq() && cr.dot(n) < 0) cr.negate(); n.add(cr.normalize()); }
+  }
+  n.normalize();
+  const X = new THREE.Vector3(1, 0, 0).sub(n.clone().multiplyScalar(n.x)).normalize();
+  const U = n.clone().cross(X).normalize(); // 판 위쪽
+  if (U.y < 0) U.negate();
+  let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+  for (const p of pts) {
+    const d = p.clone().sub(c);
+    const x = d.dot(X), y = d.dot(U);
+    u0 = Math.min(u0, x); u1 = Math.max(u1, x); v0 = Math.min(v0, y); v1 = Math.max(v1, y);
+  }
+  const at = (x, y) => c.clone().add(X.clone().multiplyScalar(x)).add(U.clone().multiplyScalar(y));
+  // 모서리 둥근 정도: 위·아래 가장자리에서 곧은 구간의 길이를 재면, 남는 양쪽이 둥근 부분이다
+  const edgeRadius = (vEdge) => {
+    const eps = (v1 - v0) * 0.003;
+    let a = Infinity, b = -Infinity;
+    for (const p of pts) {
+      const d = p.clone().sub(c);
+      if (Math.abs(d.dot(U) - vEdge) < eps) { const x = d.dot(X); a = Math.min(a, x); b = Math.max(b, x); }
+    }
+    return a === Infinity ? 0 : Math.max(0, (u1 - u0 - (b - a)) / 2);
+  };
+  return { tl: at(u0, v1), tr: at(u1, v1), br: at(u1, v0), bl: at(u0, v0), size: [u1 - u0, v1 - v0], radius: { top: edgeRadius(v1) / (u1 - u0), bottom: edgeRadius(v0) / (u1 - u0) } };
+}
+
+async function render(cfg) {
+  const W = cfg.width, H = cfg.height;
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(1);
+  renderer.setSize(W, H);
+  renderer.setClearColor(0x000000, 0);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = cfg.aces ? THREE.ACESFilmicToneMapping : THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = cfg.exposure ?? 1;
+  const scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.03).texture;
+  scene.environmentIntensity = cfg.env ?? 1;
+  // 조명: 앞 위 왼쪽에서 은은한 주광, 뒤 양옆에서 강한 테두리 빛 (모서리가 빛나는 제품 사진 조명)
+  for (const l of cfg.lights ?? [{ pos: [-2, 4, 5], i: cfg.key ?? 1.4 }, { pos: [4, 2, -3], i: cfg.rim ?? 0.8 }]) {
+    const d = new THREE.DirectionalLight(l.color ?? 0xffffff, l.i);
+    d.position.set(...l.pos);
+    scene.add(d);
+  }
+
+  const g = await loader.loadAsync(`/models/${cfg.file}.glb`);
+  const root = new THREE.Group();
+  root.add(g.scene);
+  root.rotation.set(...cfg.rotation);
+  scene.add(root);
+  root.updateMatrixWorld(true);
+
+  let screen = null;
+  g.scene.traverse((o) => { if (o.isMesh && o.name === cfg.screen) screen = o; });
+  // 화면은 꺼진 검은 유리로 (위에 진짜 데모를 얹는다)
+  // 반사 없는 검정: 정면에서 조명이 비치면 하얗게 떠서, 얹은 화면 가장자리로 새어 보인다
+  screen.material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  // 베젤(화면 둘레 유리)도 같은 검정으로: 회색으로 빛나면 화면 모서리와 바깥 테두리 곡선이 따로 놀아 보인다
+  const black = new Set((params.get('black') ?? cfg.black ?? []).toString().split(',').filter(Boolean));
+  g.scene.traverse((o) => { if (o.isMesh && black.has(o.name)) o.material = new THREE.MeshBasicMaterial({ color: 0x000000 }); });
+
+  const box = new THREE.Box3().setFromObject(root);
+  const center = box.getCenter(new THREE.Vector3());
+  const camera = new THREE.PerspectiveCamera(cfg.fov, W / H, 0.01, 50);
+  const dir = new THREE.Vector3(...cfg.view).normalize();
+  // 물체가 화면에 꽉 차게: 바운딩 구 반지름으로 거리 계산
+  const radius = box.getBoundingSphere(new THREE.Sphere()).radius;
+  const dist = radius / Math.sin(THREE.MathUtils.degToRad(cfg.fov / 2)) * (cfg.fill ?? 1);
+  camera.position.copy(center).add(dir.multiplyScalar(dist));
+  camera.lookAt(center);
+  camera.updateMatrixWorld(true);
+  renderer.render(scene, camera);
+
+  // 화면 모서리: 돌리기 전(모델 좌표)에서 재야 화면의 가로가 X 축과 맞는다. 잰 뒤 돌린 만큼 옮긴다.
+  const rot = root.rotation.clone();
+  root.rotation.set(0, 0, 0);
+  root.updateMatrixWorld(true);
+  const k = screenCorners(screen);
+  root.rotation.copy(rot);
+  root.updateMatrixWorld(true);
+  for (const n of ['tl', 'tr', 'br', 'bl']) k[n].applyMatrix4(root.matrixWorld);
+  const proj = (p) => { const q = p.clone().project(camera); return [((q.x + 1) / 2) * W, ((1 - q.y) / 2) * H]; };
+  let quad = { tl: proj(k.tl), tr: proj(k.tr), br: proj(k.br), bl: proj(k.bl) };
+  // 모델에 따라 화면이 -Z 를 보고 있으면 좌우가 뒤집혀 나온다. 찍힌 위치로 바로잡는다.
+  if (quad.tl[0] > quad.tr[0]) quad = { tl: quad.tr, tr: quad.tl, br: quad.bl, bl: quad.br };
+
+  // 투명한 가장자리 잘라내기 (여백 조금 남김)
+  const c2 = document.createElement('canvas');
+  c2.width = W; c2.height = H;
+  const ctx = c2.getContext('2d');
+  ctx.drawImage(renderer.domElement, 0, 0);
+  const data = ctx.getImageData(0, 0, W, H).data;
+  let x0 = W, y0 = H, x1 = 0, y1 = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (data[(y * W + x) * 4 + 3] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  const pad = Math.round(Math.max(x1 - x0, y1 - y0) * 0.02);
+  x0 = Math.max(0, x0 - pad); y0 = Math.max(0, y0 - pad); x1 = Math.min(W - 1, x1 + pad); y1 = Math.min(H - 1, y1 + pad);
+  const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+  const crop = document.createElement('canvas');
+  crop.width = cw; crop.height = ch;
+  crop.getContext('2d').drawImage(c2, x0, y0, cw, ch, 0, 0, cw, ch);
+  for (const key2 of Object.keys(quad)) quad[key2] = [(quad[key2][0] - x0) / cw, (quad[key2][1] - y0) / ch];
+
+  // 확인용: 모서리에 빨간 점
+  const dbg = document.createElement('canvas');
+  dbg.width = cw; dbg.height = ch;
+  const d = dbg.getContext('2d');
+  d.drawImage(crop, 0, 0);
+  d.strokeStyle = '#ff3b30'; d.lineWidth = Math.max(2, cw / 400);
+  d.beginPath();
+  ['tl', 'tr', 'br', 'bl'].forEach((n, i) => { const [x, y] = quad[n]; i ? d.lineTo(x * cw, y * ch) : d.moveTo(x * cw, y * ch); });
+  d.closePath(); d.stroke();
+  document.getElementById('out').appendChild(dbg);
+
+  const meta = { width: cw, height: ch, quad, screenMeters: k.size, radius: k.radius };
+  window.results = window.results || {};
+  window.results[cfg.name] = meta;
+  if (cfg.save) {
+    await fetch(`/save?name=${cfg.name}.png`, { method: 'POST', body: crop.toDataURL('image/png') });
+    await fetch(`/save?name=${cfg.name}.json`, { method: 'POST', body: JSON.stringify(meta, null, 2) });
+  }
+  renderer.dispose();
+  return meta;
+}
+
+const params = new URLSearchParams(location.search);
+const save = params.has('save');
+const scale = Number(params.get('scale') || 1);
+const phoneLights = [
+  { pos: [-1.5, 3, 4], i: 0.8 },
+  { pos: [-3.5, 1.2, -2], i: 6, color: 0xdfe9ff },
+  { pos: [3.5, 1.2, -2], i: 6, color: 0xffe9d6 },
+  { pos: [0, 4, -1], i: 2 },
+];
+const cinematic = [
+  { pos: [-1.5, 3, 4], i: 0.9 },
+  { pos: [-3.5, 1.5, -2.5], i: 3.2, color: 0xdfe9ff },
+  { pos: [3.5, 1.5, -2.5], i: 3.2, color: 0xffe9d6 },
+  { pos: [0, 4, -1], i: 1.2 },
+];
+window.configs = {
+  macbook: { name: 'macbook', file: 'macbook_pro_14_inch_m5_black', screen: 'Object_107', black: ['Object_105'], rotation: [0, 0, 0], view: [0, 0.05, 1], fov: 12, width: 2600 * scale, height: 2000 * scale, fill: 1, exposure: 1.1, env: 0.45, aces: true, lights: cinematic, save },
+  iphone: { name: 'iphone', file: 'apple_iphone_15_pro_max_black', screen: 'xXDHkMplTIDAXLN', rotation: [0, Math.PI, 0], view: [0, 0, 1], fov: 12, width: 1400 * scale, height: 2200 * scale, fill: 1, exposure: 1.1, env: 0.45, aces: true, lights: phoneLights, save },
+};
+for (const k of (params.get('only') || 'macbook,iphone').split(',')) await render(window.configs[k]);
+document.title = 'done';
+</script>

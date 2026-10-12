@@ -19,6 +19,7 @@
 ```
 apps/desktop          Electron 앱 (main / preload / renderer)
 apps/mobile           iOS 앱 (Expo 개발 빌드)
+apps/site             홈페이지 (Astro 정적 사이트: 소개, 개인정보 처리방침, 지원)
 packages/remote-web   폰 웹 리모컨. 데스크톱 앱이 4747 포트에서 내려준다
 packages/remote-core  폰 쪽 연결 코드 (웹 리모컨과 iOS 앱이 같이 쓴다)
 packages/protocol     폰 <-> 데스크톱 메시지, 연결 주소, 타이머 계산
@@ -60,6 +61,25 @@ pnpm --filter @pointer/mobile ios
 
 실제 아이폰: `apps/mobile/ios/pointer.xcworkspace` 를 Xcode 로 열고 Signing 에서 팀을 고른 뒤 폰을 골라 실행.
 볼륨 버튼과 에어 포인터는 시뮬레이터에 버튼·자이로가 없어서 실제 폰에서만 확인할 수 있다.
+
+## 홈페이지
+
+```bash
+pnpm --filter @pointer/site dev      # http://localhost:5180
+pnpm --filter @pointer/site build    # apps/site/dist
+```
+
+제품 이름, 다운로드·App Store 주소, GitHub, 문의 창구는 `apps/site/src/site.ts` 한 곳에 있다.
+링크가 `null` 이면 화면에 "준비 중" 으로 나온다.
+
+첫 화면의 맥북·아이폰은 3D 모델을 렌더링한 이미지(`public/devices/`)이고, 그 화면 자리에 진짜 데모를 원근에 맞춰 얹는다
+(`src/data/devices.ts`, `src/scripts/warp.ts`). 모델 원본은 저장소에 올리지 않는다:
+아이폰은 Sketchfab polyman 의 CC BY 4.0 (사이트 아래에 출처 표기), 맥북은 Sketchfab Standard (파일 재배포 금지, 렌더 이미지로만 쓴다).
+다시 렌더링하는 법은 `apps/site/scripts/render-devices.mjs` 맨 위에 있다.
+효과 버튼 아이콘은 Microsoft Fluent Emoji 3D (MIT, 고지문은 `apps/site/public/icons/fx/LICENSE-fluentui-emoji.txt`). 딩동댕 O 는 앱 안의 O 와 같은 파랑으로 색만 돌렸다.
+
+공유 이미지(og.png)는
+`node apps/site/scripts/build-og.mjs <@resvg/resvg-js 가 있는 node_modules>` 로 다시 만든다.
 
 ## 검사
 

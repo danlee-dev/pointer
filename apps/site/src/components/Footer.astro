@@ -1,0 +1,55 @@
+---
+import logo from '../../../../brand/logo/full-ui.svg?raw';
+import { site, localePath, type Lang } from '../site';
+import { common } from '../i18n/common';
+
+interface Props {
+  lang: Lang;
+  path: '/' | '/privacy' | '/support';
+}
+const { lang, path } = Astro.props;
+const t = common[lang];
+const mark = logo.replace(/\srole="img"\saria-label="[^"]*"/, ' aria-hidden="true" focusable="false"');
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="logo" href={localePath(lang, '/')} aria-label={t.nav.home} set:html={mark} />
+        <p class="footer-tagline">{t.tagline}</p>
+      </div>
+      <div class="footer-links">
+        <div>
+          <h2 class="visually-hidden">{site.name}</h2>
+          <ul>
+            <li><a href={localePath(lang, '/privacy')} aria-current={path === '/privacy' ? 'true' : undefined}>{t.footer.privacy}</a></li>
+            <li><a href={localePath(lang, '/support')} aria-current={path === '/support' ? 'true' : undefined}>{t.footer.support}</a></li>
+            <li><a href={site.github} rel="noopener">{t.footer.github}</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="visually-hidden">{t.footer.language}</h2>
+          <ul>
+            <li><a href={localePath('ko', path)} hreflang="ko" lang="ko" aria-current={lang === 'ko' ? 'true' : undefined}>한국어</a></li>
+            <li><a href={localePath('en', path)} hreflang="en" lang="en" aria-current={lang === 'en' ? 'true' : undefined}>English</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <p class="footer-bottom">
+      <span class="num">© {year} {site.name}</span>
+      <span>
+        {t.footer.credit.before}:{' '}
+        <a href="https://sketchfab.com/3d-models/apple-iphone-15-pro-max-black-df17520841214c1792fb8a44c6783ee7" rel="noopener">{t.footer.credit.by}</a>,{' '}
+        <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener license">{t.footer.credit.license}</a>, {t.footer.credit.change}
+      </span>
+      <span>
+        {t.footer.icons.before}:{' '}
+        <a href="https://github.com/microsoft/fluentui-emoji" rel="noopener">{t.footer.icons.by}</a>,{' '}
+        <a href="/icons/fx/LICENSE-fluentui-emoji.txt" rel="license">{t.footer.icons.license}</a>
+      </span>
+    </p>
+  </div>
+</footer>
