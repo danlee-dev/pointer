@@ -17,7 +17,7 @@ import {
   type Tool,
 } from '@pointer/protocol';
 import { messages, resolveLocale, type Messages } from '@pointer/i18n';
-import { RemoteClient } from './client';
+import { RemoteClient } from '@pointer/remote-core';
 import { deviceInfo, haptics, keepAwake } from './device';
 import { LaserIcon, MagnifyIcon, MoreIcon, PenIcon, SpotlightIcon } from './icons';
 import { Pad } from './Pad';
