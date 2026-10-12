@@ -12,3 +12,6 @@ release/
 .kpi/
 apps/desktop/src/renderer/public/pdfjs/
 apps/desktop/native/bin/
+apps/mobile/ios/
+apps/mobile/android/
+apps/mobile/.expo/
