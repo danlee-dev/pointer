@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // 브라우저와 React Native 양쪽에서 쓴다. WebSocket·fetch 타입은 DOM 쪽 것을 빌린다.
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": ["src"]
+}

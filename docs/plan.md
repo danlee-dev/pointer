@@ -153,7 +153,9 @@ MSIX 패키지를 만들어 올린다.
 2. ~~AI 와 같이 대본 짜기 (MCP)~~ (완료 2026-10-12): 127.0.0.1:4750/mcp?k=토큰, stateless Streamable HTTP.
    도구 get_presentation / read_slides / view_slide / write_notes / write_notes_batch / go_to_slide(발표 중엔 막음),
    프롬프트 write_script. 쓴 메모는 발표자 보기(입력 중이 아니면)와 폰에 바로 뜬다. 앱 쪽 API 비용 없음.
-3. 2단계 iOS 앱
+3. ~~2단계 iOS 앱~~ (완료 2026-10-12, 시뮬레이터 검증): Expo SDK 57 / RN 0.86 / React 19.2.3 (모노레포 전체 맞춤).
+   연결 코드는 packages/remote-core 로 웹 리모컨과 공유. 볼륨 버튼은 기본 꺼짐 + 한 번 제안(심사 2.5.9),
+   에어 포인터는 '에어' 도구. 실제 아이폰에서 볼륨 버튼·자이로 감도 확인이 남았다.
 4. 앱 이름 정하기 -> 로고 워드마크 다시 만들기
 
 ## 아직 정할 것

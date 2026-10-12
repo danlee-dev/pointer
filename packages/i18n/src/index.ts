@@ -12,12 +12,14 @@ const ko = {
     spotlight: '스포트라이트',
     magnify: '돋보기',
     pen: '펜',
+    air: '에어',
   },
   toolHint: {
     laser: '슬라이드를 누른 채 움직이면 레이저가 나갑니다',
     spotlight: '누른 곳 주변만 밝게 비춥니다',
     magnify: '누른 곳을 크게 보여 줍니다',
     pen: '손가락으로 그리면 화면에 그려집니다. 장을 넘기면 지워집니다',
+    air: '슬라이드를 누른 채 폰을 기울이면 레이저가 따라 움직입니다',
   },
 
   // ---------- 폰 리모컨 ----------
@@ -47,6 +49,24 @@ const ko = {
     off: '꺼짐',
     notes: '발표 메모',
     ms: (n: number) => `${n}ms`,
+  },
+
+  // ---------- iOS 앱 ----------
+  app: {
+    connectTitle: '컴퓨터와 연결',
+    connectSub: '컴퓨터의 pointer 앱에 뜬 QR 코드를 비추세요. 폰과 컴퓨터가 같은 와이파이에 있어야 합니다.',
+    allowCamera: '카메라 허용',
+    cameraDenied: '카메라를 쓸 수 없습니다. 설정에서 허용하거나 주소를 직접 입력하세요.',
+    enterAddress: '주소 직접 입력',
+    addressPlaceholder: 'http://192.168.0.12:4747/?k=...',
+    connect: '연결',
+    invalidAddress: 'pointer 앱의 연결 주소가 아닙니다. QR 아래에 있는 주소를 그대로 넣어 주세요.',
+    changeComputer: '다른 컴퓨터에 연결',
+    volumeButtons: '볼륨 버튼으로 넘기기',
+    volumeButtonsSub: '볼륨 올리기는 다음, 내리기는 이전. 켜 두는 동안 폰 소리 크기는 중간으로 고정됩니다.',
+    volumeTip: '볼륨 버튼으로도 넘길 수 있습니다',
+    enable: '켜기',
+    later: '나중에',
   },
 
   // ---------- 타이머 ----------
@@ -175,12 +195,14 @@ const en: Messages = {
     spotlight: 'Spotlight',
     magnify: 'Zoom',
     pen: 'Pen',
+    air: 'Air',
   },
   toolHint: {
     laser: 'Touch and drag on the slide to point',
     spotlight: 'Lights up only the area you touch',
     magnify: 'Magnifies the area you touch',
     pen: 'Draw with your finger. Ink clears when the slide changes',
+    air: 'Hold the slide and tilt your phone to move the laser',
   },
 
   remote: {
@@ -209,6 +231,23 @@ const en: Messages = {
     off: 'Off',
     notes: 'Notes',
     ms: (n: number) => `${n} ms`,
+  },
+
+  app: {
+    connectTitle: 'Connect to your computer',
+    connectSub: 'Point the camera at the QR code in the pointer app on your computer. Your phone and computer need to be on the same Wi-Fi.',
+    allowCamera: 'Allow camera',
+    cameraDenied: "Can't use the camera. Allow it in Settings or enter the address yourself.",
+    enterAddress: 'Enter address',
+    addressPlaceholder: 'http://192.168.0.12:4747/?k=...',
+    connect: 'Connect',
+    invalidAddress: "That isn't a pointer address. Copy the address shown under the QR code.",
+    changeComputer: 'Connect to another computer',
+    volumeButtons: 'Volume buttons change slides',
+    volumeButtonsSub: 'Volume up goes forward, down goes back. While on, your phone volume stays at the middle.',
+    volumeTip: 'You can also use the volume buttons',
+    enable: 'Turn on',
+    later: 'Later',
   },
 
   timer: {

@@ -1,6 +1,6 @@
 // 데스크톱 앱과의 WebSocket 연결.
 // 끊기면 알아서 다시 붙고, 다시 못 붙는 이유(QR 이 바뀜, 버전 다름, 끊김 당함)는 화면에 알린다.
-// iOS 앱(Expo)도 같은 모양으로 쓸 수 있게 브라우저 전용 API 는 최소로 쓴다.
+// 브라우저(안드로이드 웹 리모컨)와 React Native(iOS 앱) 둘 다에 있는 WebSocket·fetch 만 쓴다.
 
 import {
   PROTOCOL_VERSION,
@@ -120,6 +120,13 @@ export class RemoteClient {
     this.clearTimers();
     this.ws?.close();
     this.set({ status, latency: null });
+  }
+
+  /** 연결을 끝낸다 (다른 컴퓨터로 바꿀 때). 다시 붙지 않는다 */
+  close() {
+    this.stopped = true;
+    this.clearTimers();
+    this.ws?.close();
   }
 
   /** 폰 화면이 꺼졌다 켜지면 연결이 죽어 있는 경우가 많다. 바로 다시 붙는다 */

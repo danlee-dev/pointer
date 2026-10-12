@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 import type { Blank, PenColor, Tool } from '@pointer/protocol';
 import type { Messages } from '@pointer/i18n';
-import type { RemoteClient } from './client';
+import type { RemoteClient } from '@pointer/remote-core';
 
 const PEN_HEX: Record<PenColor, string> = { red: '#ff3b30', yellow: '#ffd60a', blue: '#2f8bff', white: '#ffffff' };
 const MAX_CHUNK = 256; // x,y 128쌍
