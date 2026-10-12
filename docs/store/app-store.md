@@ -128,9 +128,10 @@ Notes on permissions and features:
 
 ## 스크린샷
 
-6.9인치 (1320 x 2868) 필수. `docs/store/screenshots/` 에 있다. 순서:
-1. 리모컨 (레이저)
-2. 효과
-3. 장 목록
-4. 발표 메모와 타이머
-5. 연결 (QR)
+6.9인치 (1320 x 2868) 필수. `docs/store/screenshots/` 에 있다. 파일 이름 순서대로 올린다:
+1. `01-remote.png` 리모컨 (레이저)
+2. `02-effects.png` 효과
+3. `03-jump.png` 장 목록
+4. `04-settings.png` 설정 (볼륨 버튼, 목표 시간)
+
+원본 캡처는 `screenshots/raw/`, 합성 방법은 `docs/store/compose.py` 맨 위.
