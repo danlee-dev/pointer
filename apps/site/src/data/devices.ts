@@ -22,7 +22,9 @@ export const MACBOOK: Device = {
   aspect: 1778 / 1231,
   quad: { tl: [0.08858, 0.04823], tr: [0.91142, 0.04829], br: [0.92161, 0.79247], bl: [0.07838, 0.79242] },
   // 화면 실측 0.3008 x 0.1955 m. 둥근 모서리도 모델에서 잰 비율 그대로
-  screen: { w: 1000, h: 650, radiusTop: 6.5, radiusBottom: 0.0 },
+  // 위 모서리 반지름은 렌더 이미지에서 잰 값 (검은 화면 영역이 둥글어지는 곡선: 화면 폭 1463px 에서 약 18.5px).
+  // 메쉬로 재면 위 가장자리의 노치 홈 때문에 곧은 구간이 길게 잡혀 절반쯤으로 작게 나온다.
+  screen: { w: 1000, h: 650, radiusTop: 12.7, radiusBottom: 0.0 },
 };
 
 export const IPHONE: Device = {
