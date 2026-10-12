@@ -42,6 +42,7 @@ const api: DesktopApi = {
   onNotice: (cb) => listen(IPC.notice, cb),
   onPointer: (cb) => listen(IPC.pointer, cb),
   onInk: (cb) => listen(IPC.ink, cb),
+  onCue: (cb) => listen(IPC.cue, cb),
   getInk: () => ipcRenderer.invoke(IPC.getInk),
 
   getConnection: () => ipcRenderer.invoke(IPC.getConnection),

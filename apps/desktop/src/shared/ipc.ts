@@ -1,6 +1,6 @@
 // main <-> renderer IPC 계약. preload 가 이 모양 그대로 window.pointer 로 노출한다.
 
-import type { ClientMessage, DeviceInfo, PageSize, PenColor, PresentationState, Tool } from '@pointer/protocol';
+import type { ClientMessage, Cue, DeviceInfo, PageSize, PenColor, PresentationState, Tool } from '@pointer/protocol';
 import type { Locale } from '@pointer/i18n';
 
 /** 렌더러가 자료를 그릴 때 필요한 정보. 파일 내용은 readFile 로 따로 받는다 */
@@ -44,6 +44,13 @@ export interface Stroke {
   color: PenColor;
   /** x,y 를 번갈아 담은 0..1 좌표 */
   pts: number[];
+}
+
+/** 효과 누름/뗌. audio 는 소리를 낼 창 하나만 true (청중 창이 있으면 그쪽) */
+export interface CueEvent {
+  cue: Cue;
+  on: boolean;
+  audio: boolean;
 }
 
 export type InkEvent =
@@ -129,6 +136,7 @@ export interface DesktopApi {
   onNotice(cb: (notice: Notice) => void): () => void;
   onPointer(cb: (p: PointerFx) => void): () => void;
   onInk(cb: (e: InkEvent) => void): () => void;
+  onCue(cb: (e: CueEvent) => void): () => void;
   getInk(): Promise<Stroke[]>;
 
   // 연결
@@ -184,6 +192,7 @@ export const IPC = {
   notice: 'app:notice',
   pointer: 'fx:pointer',
   ink: 'fx:ink',
+  cue: 'fx:cue',
   getInk: 'fx:getInk',
   getConnection: 'conn:get',
   connection: 'conn:changed',

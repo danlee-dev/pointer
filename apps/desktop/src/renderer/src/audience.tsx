@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Stage } from './stage/Stage';
+import { CueLayer } from './cues/CueLayer';
 import { useLoadedDeck, usePresentationKeys, usePresentationState } from './hooks';
 import './audience.css';
 
@@ -32,11 +33,11 @@ function Audience() {
     };
   }, []);
 
-  if (!state?.deck) return <main className="audience" />;
   return (
     <main className={idle ? 'audience idle' : 'audience'}>
-      <Stage className="audience-stage" deck={deck} pages={state.deck.pages} index={state.index} fx preload />
-      <div className={`blank blank-${state.blank}`} />
+      {state?.deck && <Stage className="audience-stage" deck={deck} pages={state.deck.pages} index={state.index} fx preload />}
+      {state?.deck && <div className={`blank blank-${state.blank}`} />}
+      <CueLayer />
     </main>
   );
 }

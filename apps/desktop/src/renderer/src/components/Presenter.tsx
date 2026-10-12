@@ -6,6 +6,7 @@ import type { PresentationState } from '@pointer/protocol';
 import type { Messages } from '@pointer/i18n';
 import type { ConnectionInfo } from '../../../shared/ipc';
 import { Stage } from '../stage/Stage';
+import { CueLayer } from '../cues/CueLayer';
 import { useDisplayCount, useFullscreen, useLoadedDeck, usePresentationKeys } from '../hooks';
 import { ConnectPanel } from './ConnectPanel';
 import { CloseIcon, ExpandIcon, ShrinkIcon } from './icons';
@@ -83,6 +84,7 @@ export function Presenter({ state, conn, t }: Props) {
       <main className="presenter-main">
         <section className="current">
           <Stage className="fill" deck={deck} pages={pages} index={state.index} fx pointerInput preload />
+          <CueLayer />
           {state.blank !== 'none' && <div className={`current-blank blank-${state.blank}`} />}
         </section>
 
@@ -99,6 +101,7 @@ export function Presenter({ state, conn, t }: Props) {
       <footer className="presenter-foot">
         <Filmstrip deckId={state.deck.id} count={pages.length} index={state.index} />
         <p className="keys subtle small">{t.presenter.keys}</p>
+        <p className="keys subtle small">{t.presenter.cueKeys}</p>
       </footer>
 
       {showConnect && (

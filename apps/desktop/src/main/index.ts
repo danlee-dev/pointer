@@ -16,13 +16,14 @@ import {
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { toString as qrToString } from 'qrcode';
-import { DEFAULT_PORT, pairingUrl, type PresentationState } from '@pointer/protocol';
+import { DEFAULT_PORT, pairingUrl, type Cue, type PresentationState } from '@pointer/protocol';
 import { messages, resolveLocale, type Locale } from '@pointer/i18n';
 import {
   IPC,
   type AiConnection,
   type ConnectionInfo,
   type DesktopCommand,
+  type CueEvent,
   type InkEvent,
   type Notice,
   type OpenResult,
@@ -134,9 +135,36 @@ function handleCommand(c: DesktopCommand) {
     case 'clearInk':
       clearInk();
       return;
+    case 'cue':
+      cue(c.cue, c.on);
+      return;
     default:
       dispatch(c);
   }
+}
+
+// ---------- 효과 ----------
+// 누르고 있는 효과는 떼는 신호가 와야 끝난다. 폰이 끊기거나 신호를 놓쳐도
+// 화면에서 두구두구가 영원히 울리지 않게 20초 뒤엔 저절로 마무리한다.
+
+const MAX_CUE_HOLD_MS = 20_000;
+const heldCues = new Map<Cue, ReturnType<typeof setTimeout>>();
+
+function cue(name: Cue, on: boolean) {
+  const held = heldCues.get(name);
+  if (held) clearTimeout(held);
+  heldCues.delete(name);
+  if (on) heldCues.set(name, setTimeout(() => cue(name, false), MAX_CUE_HOLD_MS));
+  else if (!held) return; // 이미 마무리된 효과
+  // 소리는 한 창에서만 낸다. 청중 창이 있으면 거기 (프로젝터·TV 스피커로 나가게)
+  const audioWin = live(audienceWin) ? audienceWin : mainWin;
+  for (const w of [mainWin, audienceWin]) {
+    if (live(w)) w.webContents.send(IPC.cue, { cue: name, on, audio: w === audioWin } satisfies CueEvent);
+  }
+}
+
+function releaseCues() {
+  for (const name of [...heldCues.keys()]) cue(name, false);
 }
 
 // ---------- 폰 서버 ----------
@@ -159,8 +187,11 @@ const server = createRemoteServer({
     if (msg.t !== 'hello' && msg.t !== 'ping') handleCommand(msg);
   },
   onDevicesChanged: () => void publishConnection(),
-  // 손가락을 댄 채로 폰이 잠기면 레이저가 화면에 남는다
-  onDeviceGone: () => toWindows(IPC.pointer, { tool: 'laser', on: false, x: 0, y: 0 } satisfies PointerFx),
+  // 손가락을 댄 채로 폰이 잠기면 레이저가 화면에 남는다. 누르고 있던 효과도 마무리한다.
+  onDeviceGone: () => {
+    toWindows(IPC.pointer, { tool: 'laser', on: false, x: 0, y: 0 } satisfies PointerFx);
+    releaseCues();
+  },
 });
 
 // ---------- AI (MCP) ----------
