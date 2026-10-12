@@ -13,6 +13,8 @@
     "test": "vitest run",
     "dist:mac": "electron-vite build && electron-builder --mac",
     "dist:win": "electron-vite build && electron-builder --win",
+    "release:mac": "pnpm --filter @pointer/remote-web build && pnpm run build && APPLE_KEYCHAIN_PROFILE=pointer-notary electron-builder --mac -c.mac.notarize=true",
+    "release:win": "pnpm --filter @pointer/remote-web build && pnpm run build && electron-builder --win nsis --x64",
     "predev": "node scripts/copy-pdfjs-assets.mjs && node scripts/build-native.mjs",
     "prebuild": "node scripts/copy-pdfjs-assets.mjs && node scripts/build-native.mjs"
   },
