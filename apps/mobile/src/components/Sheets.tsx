@@ -1,12 +1,12 @@
-// 아래에서 올라오는 시트: 장 이동, 타이머, 더보기. 웹 리모컨과 같은 구성 (제목, 한 줄 설명, 오른쪽 위 닫기).
+// 아래에서 올라오는 시트: 장 이동, 타이머, 효과, 더보기. 웹 리모컨과 같은 구성 (제목, 한 줄 설명, 오른쪽 위 닫기).
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { FlatList, Image, Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatClock, timerElapsed, type Blank, type TimerState } from '@pointer/protocol';
+import { formatClock, timerElapsed, type Blank, type Cue, type TimerState } from '@pointer/protocol';
 import { t } from '../i18n';
 import { color, curve, radius, type } from '../theme';
-import { CheckIcon, CloseIcon } from './icons';
+import { CheckIcon, CloseIcon, CUE_ICONS } from './icons';
 
 function Sheet({ visible, title, sub, onClose, children, scroll = true }: { visible: boolean; title: string; sub?: string; onClose: () => void; children: ReactNode; scroll?: boolean }) {
   const insets = useSafeAreaInsets();
@@ -129,6 +129,57 @@ export function MoreSheet(props: {
   );
 }
 
+// ---------- 효과 ----------
+// 누르는 순간 on, 떼는 순간 off (손가락이 미끄러져 나가도 off). 두구두구는 맨 위에 크게.
+
+const CUE_GRID: Cue[] = ['confetti', 'applause', 'fireworks', 'micdrop', 'correct', 'wrong'];
+
+function CuePad({ cue, wide, onCue }: { cue: Cue; wide?: boolean; onCue: (cue: Cue, on: boolean) => void }) {
+  const [held, setHeld] = useState(false);
+  const Icon = CUE_ICONS[cue];
+  return (
+    <Pressable
+      style={[styles.cuePad, wide && styles.cueWide, held && styles.cueHeld]}
+      onPressIn={() => {
+        setHeld(true);
+        onCue(cue, true);
+      }}
+      onPressOut={() => {
+        setHeld(false);
+        onCue(cue, false);
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={t.cue.name[cue]}
+    >
+      <Icon color={held ? color.fg : color.fgMuted} size={wide ? 36 : 28} />
+      <Text style={[styles.cueLabel, wide && styles.cueLabelWide]}>{t.cue.name[cue]}</Text>
+      {held ? <View style={styles.liveDot} /> : null}
+    </Pressable>
+  );
+}
+
+export function CueSheet({ visible, onCue, onClose }: { visible: boolean; onCue: (cue: Cue, on: boolean) => void; onClose: () => void }) {
+  const { width } = useWindowDimensions();
+  // 3열. flexWrap + % 대신 폭을 숫자로 정한다 (RN 에서 % 줄바꿈은 마지막 줄이 늘어난다)
+  const cell = (width - 40 - 16) / 3;
+  return (
+    <Sheet visible={visible} title={t.cue.title} sub={t.cue.sub} onClose={onClose} scroll={false}>
+      <View style={styles.cueGrid}>
+        <CuePad cue="drumroll" wide onCue={onCue} />
+        {[CUE_GRID.slice(0, 3), CUE_GRID.slice(3)].map((row, i) => (
+          <View key={i} style={styles.cueRow}>
+            {row.map((c) => (
+              <View key={c} style={{ width: cell }}>
+                <CuePad cue={c} onCue={onCue} />
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+    </Sheet>
+  );
+}
+
 const styles = StyleSheet.create({
   backdrop: { flex: 1, backgroundColor: color.scrim },
   sheet: { maxHeight: '86%', paddingTop: 24, paddingHorizontal: 20, backgroundColor: color.bgRaised, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, ...curve },
@@ -153,4 +204,12 @@ const styles = StyleSheet.create({
   switchRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   switchSub: { color: color.fgMuted, fontSize: 13, lineHeight: 19, marginTop: 4 },
   latency: { color: color.fgSubtle, fontSize: 13, marginTop: 16, fontVariant: ['tabular-nums'] },
+  cueGrid: { gap: 8, paddingBottom: 4 },
+  cueRow: { flexDirection: 'row', gap: 8 },
+  cuePad: { minHeight: 96, alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: radius.lg, ...curve, backgroundColor: color.surface },
+  cueWide: { minHeight: 120, flexDirection: 'row', gap: 12 },
+  cueHeld: { backgroundColor: color.surfacePress, transform: [{ scale: 0.96 }] },
+  cueLabel: { color: color.fg, fontSize: 14, fontWeight: '600' },
+  cueLabelWide: { fontSize: 20, fontWeight: '300', letterSpacing: -0.4 },
+  liveDot: { position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: color.laser },
 });

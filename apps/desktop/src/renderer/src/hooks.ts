@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { DeckInfo, PresentationState } from '@pointer/protocol';
+import type { Cue, DeckInfo, PresentationState } from '@pointer/protocol';
 import { messages, type Locale, type Messages } from '@pointer/i18n';
 import type { ConnectionInfo } from '../../shared/ipc';
 import { loadDeck, type LoadedDeck } from './deck/loadDeck';
@@ -183,5 +183,54 @@ export function usePresentationKeys(opts: { total: number; blank: string; onEsca
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
+  }, []);
+  useCueKeys();
+}
+
+// 효과 단축키 (Canva 처럼). 누르고 있는 동안 이어지고 떼면 마무리한다.
+const CUE_KEYS: Record<string, Cue> = {
+  KeyC: 'confetti',
+  KeyD: 'drumroll',
+  KeyA: 'applause',
+  KeyR: 'fireworks',
+  KeyM: 'micdrop',
+  KeyO: 'correct',
+  KeyX: 'wrong',
+};
+
+function useCueKeys() {
+  useEffect(() => {
+    const down = new Set<string>();
+    const typing = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      return !!el && (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.isContentEditable);
+    };
+    const onDown = (e: KeyboardEvent) => {
+      const cue = CUE_KEYS[e.code];
+      if (!cue || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+      e.preventDefault();
+      // 누르고 있으면 keydown 이 계속 반복해서 온다. 처음 한 번만 보낸다.
+      if (e.repeat || down.has(e.code)) return;
+      down.add(e.code);
+      api().command({ t: 'cue', cue, on: true });
+    };
+    const onUp = (e: KeyboardEvent) => {
+      const cue = CUE_KEYS[e.code];
+      if (!cue || !down.delete(e.code)) return;
+      api().command({ t: 'cue', cue, on: false });
+    };
+    // 키를 누른 채 다른 창으로 가면 keyup 이 안 온다
+    const onBlur = () => {
+      for (const code of down) api().command({ t: 'cue', cue: CUE_KEYS[code]!, on: false });
+      down.clear();
+    };
+    window.addEventListener('keydown', onDown);
+    window.addEventListener('keyup', onUp);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onDown);
+      window.removeEventListener('keyup', onUp);
+      window.removeEventListener('blur', onBlur);
+    };
   }, []);
 }

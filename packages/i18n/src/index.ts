@@ -22,6 +22,21 @@ const ko = {
     air: '슬라이드를 누른 채 폰을 기울이면 레이저가 따라 움직입니다',
   },
 
+  // ---------- 효과 (청중 화면 연출) ----------
+  cue: {
+    title: '효과',
+    sub: '꾹 누르고 있으면 계속 이어지고, 떼면 마무리됩니다. 소리는 컴퓨터에서 납니다.',
+    name: {
+      confetti: '꽃가루',
+      drumroll: '두구두구',
+      applause: '박수',
+      fireworks: '불꽃놀이',
+      micdrop: '마이크 드롭',
+      correct: '딩동댕',
+      wrong: '땡',
+    },
+  },
+
   // ---------- 폰 리모컨 ----------
   remote: {
     connecting: '컴퓨터에 연결하는 중',
@@ -120,6 +135,7 @@ const ko = {
     notesPlaceholder: '이 장에서 할 말을 적어 두세요. 폰 리모컨에도 보입니다.',
     blanked: { black: '청중 화면 가림 (검정)', white: '청중 화면 가림 (흰색)' },
     keys: '방향키·PageUp/Down 넘기기, B 검은 화면, W 흰 화면, F 전체화면, Esc 발표 끝내기',
+    cueKeys: '효과는 누르고 있는 동안 이어집니다: C 꽃가루, D 두구두구, A 박수, R 불꽃놀이, M 마이크 드롭, O 딩동댕, X 땡',
     presenting: '청중 화면에 나가는 중',
     swap: '화면 바꾸기',
     fullscreen: '전체화면',
@@ -203,6 +219,20 @@ const en: Messages = {
     magnify: 'Magnifies the area you touch',
     pen: 'Draw with your finger. Ink clears when the slide changes',
     air: 'Hold the slide and tilt your phone to move the laser',
+  },
+
+  cue: {
+    title: 'Effects',
+    sub: 'Hold to keep it going, let go to finish. Sound plays from the computer.',
+    name: {
+      confetti: 'Confetti',
+      drumroll: 'Drumroll',
+      applause: 'Applause',
+      fireworks: 'Fireworks',
+      micdrop: 'Mic drop',
+      correct: 'Correct',
+      wrong: 'Wrong',
+    },
   },
 
   remote: {
@@ -298,6 +328,7 @@ const en: Messages = {
     notesPlaceholder: 'What to say on this slide. Also shown on your phone.',
     blanked: { black: 'Audience screen hidden (black)', white: 'Audience screen hidden (white)' },
     keys: 'Arrow keys or PageUp/Down to move, B black, W white, F full screen, Esc to end',
+    cueKeys: 'Effects last while you hold the key: C confetti, D drumroll, A applause, R fireworks, M mic drop, O correct, X wrong',
     presenting: 'Showing on the audience screen',
     swap: 'Swap displays',
     fullscreen: 'Full screen',

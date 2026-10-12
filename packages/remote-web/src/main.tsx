@@ -19,9 +19,9 @@ import {
 import { messages, resolveLocale, type Messages } from '@pointer/i18n';
 import { RemoteClient } from '@pointer/remote-core';
 import { deviceInfo, haptics, keepAwake } from './device';
-import { LaserIcon, MagnifyIcon, MoreIcon, PenIcon, SpotlightIcon } from './icons';
+import { LaserIcon, MagnifyIcon, MoreIcon, PenIcon, SparkleIcon, SpotlightIcon } from './icons';
 import { Pad } from './Pad';
-import { JumpSheet, MoreSheet, TimerSheet } from './Sheets';
+import { CueSheet, JumpSheet, MoreSheet, TimerSheet } from './Sheets';
 import '@pointer/design/tokens.css';
 import './remote.css';
 
@@ -60,7 +60,7 @@ function Remote({ client, pairing }: { client: RemoteClient; pairing: Pairing })
   const [tool, setTool] = useState<Tool>(() => (TOOLS as string[]).includes(store('pointer.tool') ?? '') ? (store('pointer.tool') as Tool) : 'laser');
   const [penColor, setPenColor] = useState<PenColor>('red');
   const [clearSignal, setClearSignal] = useState(0);
-  const [sheet, setSheet] = useState<'jump' | 'timer' | 'more' | null>(null);
+  const [sheet, setSheet] = useState<'jump' | 'timer' | 'cue' | 'more' | null>(null);
   const [hintSeen, setHintSeen] = useState<Record<string, boolean>>({});
   const [hapticsOn, setHapticsOn] = useState(haptics.enabled);
   const now = useNow(250) + clockOffset;
@@ -181,9 +181,14 @@ function Remote({ client, pairing }: { client: RemoteClient; pairing: Pairing })
           {clockText}
           {remaining !== null && <span className="clock-suffix">{over ? t.timer.over : t.timer.left}</span>}
         </button>
-        <button className="icon-btn" onClick={() => setSheet('more')} aria-label={t.remote.more}>
-          <MoreIcon />
-        </button>
+        <div className="bar-actions">
+          <button className="icon-btn" onClick={() => setSheet('cue')} aria-label={t.cue.title}>
+            <SparkleIcon />
+          </button>
+          <button className="icon-btn" onClick={() => setSheet('more')} aria-label={t.remote.more}>
+            <MoreIcon />
+          </button>
+        </div>
       </header>
 
       {status !== 'open' && <p className="status-line warn-text">{t.remote.reconnecting}</p>}
@@ -276,6 +281,16 @@ function Remote({ client, pairing }: { client: RemoteClient; pairing: Pairing })
           now={now}
           onAction={(action) => client.send({ t: 'timer', action })}
           onTarget={(ms) => client.send({ t: 'timerTarget', ms })}
+          onClose={() => setSheet(null)}
+          t={t}
+        />
+      )}
+      {sheet === 'cue' && (
+        <CueSheet
+          onCue={(cue, on) => {
+            if (on) haptics.tick();
+            client.send({ t: 'cue', cue, on });
+          }}
           onClose={() => setSheet(null)}
           t={t}
         />

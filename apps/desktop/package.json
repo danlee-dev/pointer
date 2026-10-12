@@ -17,10 +17,11 @@
     "prebuild": "node scripts/copy-pdfjs-assets.mjs && node scripts/build-native.mjs"
   },
   "dependencies": {
-    "qrcode": "^1.5.4",
-    "ws": "^8.22.0",
-    "fflate": "^0.8.3",
     "@modelcontextprotocol/sdk": "^1.32.1",
+    "fflate": "^0.8.3",
+    "qrcode": "^1.5.4",
+    "three": "^0.180.0",
+    "ws": "^8.22.0",
     "zod": "^4.1.0"
   },
   "devDependencies": {
@@ -31,6 +32,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.180.0",
     "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^5.2.0",
     "electron": "44.7.0",
