@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // URL 은 브라우저·RN·Node 모두에 있다. 타입은 DOM 쪽에서 가져온다.
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": ["src"]
+}
