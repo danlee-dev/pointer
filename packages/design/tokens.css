@@ -7,6 +7,8 @@
   --surface: #292524;
   --surface-hover: #33302d;
   --surface-press: #44403c;
+  /* surface 위에 한 단계 떠오른 것 (세그먼트의 고른 칸). 다크에선 더 밝게, 라이트에선 흰색 */
+  --surface-raised: #44403c;
   --fg: #fafaf9;
   --fg-muted: #a8a29e;
   --fg-subtle: #8a837d;
@@ -62,6 +64,7 @@
     --surface: #f0efed;
     --surface-hover: #e7e5e4;
     --surface-press: #d6d3d1;
+    --surface-raised: #ffffff;
     --fg: #0c0a09;
     --fg-muted: #6b655f;
     --fg-subtle: #a8a29e;
@@ -91,7 +94,7 @@
   }
   *, *::before, *::after { corner-shape: squircle; }
   /* 알약 버튼과 원(색 점, 상태 점)은 원호 그대로 둔다. squircle 로 바꾸면 알약이 둥근 네모가 된다 */
-  .btn, .btn-text, .icon-btn, .clock-btn, .toast, select, .swatch, .finger, .circle, .circle::before { corner-shape: round; }
+  .btn, .btn-text, .icon-btn, .clock-btn, .toast, select, .swatch, .finger, .seg, .seg-item, .circle, .circle::before { corner-shape: round; }
 }
 
 *, *::before, *::after { box-sizing: border-box; }

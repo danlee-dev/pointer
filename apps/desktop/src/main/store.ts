@@ -109,3 +109,16 @@ export const token = {
     return t;
   },
 };
+
+// ---------- AI(MCP) 토큰 ----------
+// 폰 연결 토큰과 따로 둔다. 폰 QR 을 새로 만들어도 AI 설정은 그대로 둔다.
+
+export const aiToken = {
+  get(): string {
+    const saved = readJson<{ token?: string }>('ai.json', {}).token;
+    if (saved && /^[a-f0-9]{24,}$/.test(saved)) return saved;
+    const t = randomBytes(16).toString('hex');
+    writeJson('ai.json', { token: t });
+    return t;
+  },
+};

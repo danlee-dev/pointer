@@ -4,6 +4,7 @@
 import {
   app,
   BrowserWindow,
+  clipboard,
   dialog,
   ipcMain,
   Menu,
@@ -19,6 +20,7 @@ import { DEFAULT_PORT, pairingUrl, type PresentationState } from '@pointer/proto
 import { messages, resolveLocale, type Locale } from '@pointer/i18n';
 import {
   IPC,
+  type AiConnection,
   type ConnectionInfo,
   type DesktopCommand,
   type InkEvent,
@@ -34,7 +36,8 @@ import { convertPresentation, isPresentation, PRESENTATION_EXT } from './convert
 import { lanAddresses } from './network';
 import { createRemoteServer } from './server';
 import { appendStroke, EMPTY_SESSION, reduce, type Ink, type Session, type SessionAction } from './session';
-import { notes, recent, settings, token } from './store';
+import { aiToken, notes, recent, settings, token } from './store';
+import { createMcpServer, DEFAULT_MCP_PORT } from './mcp';
 import { createThumbCache } from './thumbs';
 import { restoreMirror, restoreMirrorSync, unmirrorForPresenting, type MirrorSnapshot } from './displayMode';
 import {
@@ -159,6 +162,48 @@ const server = createRemoteServer({
   // 손가락을 댄 채로 폰이 잠기면 레이저가 화면에 남는다
   onDeviceGone: () => toWindows(IPC.pointer, { tool: 'laser', on: false, x: 0, y: 0 } satisfies PointerFx),
 });
+
+// ---------- AI (MCP) ----------
+
+let mcpPort = DEFAULT_MCP_PORT;
+let textSeq = 0;
+const pendingText = new Map<number, (t: string | null) => void>();
+
+/** 장 글자는 pdf.js 가 있는 숨은 렌더 창에서 꺼낸다 */
+function slideText(index: number): Promise<string | null> {
+  const deckId = session.deck?.id;
+  if (!deckId || !live(workerWin)) return Promise.resolve(null);
+  const reqId = ++textSeq;
+  return new Promise((resolve) => {
+    pendingText.set(reqId, resolve);
+    workerWin?.webContents.send(IPC.workerTextRequest, { reqId, deckId, index });
+    setTimeout(() => {
+      if (pendingText.delete(reqId)) resolve(null);
+    }, 15_000);
+  });
+}
+
+/** 메모를 쓰고, 지금 보고 있는 장이면 발표자 화면·폰에 바로 보낸다 */
+function writeNotes(index: number, text: string) {
+  if (!session.deck) return;
+  notes.set(session.deck.id, index, text);
+  if (index === session.index) publishState();
+}
+
+const mcp = createMcpServer({
+  getToken: () => aiToken.get(),
+  info: () =>
+    session.deck
+      ? { title: session.deck.title, slides: session.deck.pages.length, current: session.index, presenting: session.presenting }
+      : null,
+  getText: slideText,
+  getImage: (index) => (session.deck ? thumbs.get(session.deck.id, index) : Promise.resolve(null)),
+  getNotes: (index) => (session.deck ? notes.get(session.deck.id, index) : ''),
+  setNotes: writeNotes,
+  goTo: (index) => dispatch({ t: 'goto', index }),
+});
+
+const aiConnection = (): AiConnection => ({ url: `http://127.0.0.1:${mcpPort}/mcp?k=${aiToken.get()}` });
 
 async function connectionInfo(): Promise<ConnectionInfo> {
   const chosen = settings.get().address;
@@ -519,6 +564,14 @@ function registerIpc() {
     pendingLoads.get(r.reqId)?.(r);
     pendingLoads.delete(r.reqId);
   });
+  ipcMain.on(IPC.workerTextDone, (_e, reqId: number, text: string | null) => {
+    pendingText.get(reqId)?.(text);
+    pendingText.delete(reqId);
+  });
+  ipcMain.handle(IPC.getAiConnection, () => aiConnection());
+  ipcMain.on(IPC.copyText, (_e, text: unknown) => {
+    if (typeof text === 'string' && text.length < 10_000) clipboard.writeText(text);
+  });
   ipcMain.on(IPC.workerThumbDone, (_e, deckId: string, index: number, jpeg: Uint8Array | null) => {
     thumbs.put(deckId, index, jpeg ? Buffer.from(jpeg) : null);
   });
@@ -588,6 +641,7 @@ app.whenReady().then(async () => {
   pairingToken = token.get();
   addresses = lanAddresses();
   port = await server.listen(DEFAULT_PORT);
+  mcpPort = await mcp.listen(DEFAULT_MCP_PORT);
 
   workerWin = createWorkerWindow();
   const w = workerWin;
@@ -623,6 +677,7 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', () => app.quit());
 app.on('before-quit', () => {
   server.close();
+  mcp.close();
   if (mirrorSnapshot) restoreMirrorSync(mirrorSnapshot);
   mirrorSnapshot = null;
 });
