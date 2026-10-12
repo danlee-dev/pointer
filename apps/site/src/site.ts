@@ -7,8 +7,8 @@ export const site = {
   /** 정식 주소. 도메인이 정해지면 적는다. null 이면 Vercel 이 준 주소, 그것도 없으면 로컬 주소를 쓴다 */
   url: null as string | null,
   downloads: {
-    mac: null as string | null,
-    windows: null as string | null,
+    mac: 'https://github.com/danlee-dev/pointer/releases/latest/download/pointer-mac.dmg' as string | null,
+    windows: 'https://github.com/danlee-dev/pointer/releases/latest/download/pointer-windows-setup.exe' as string | null,
   },
   appStore: null as string | null,
   github: 'https://github.com/danlee-dev/pointer',

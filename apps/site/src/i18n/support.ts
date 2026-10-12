@@ -35,6 +35,16 @@ const ko: SupportCopy = {
   topicsLabel: '주제',
   topics: [
     {
+      id: 'install',
+      h: '설치',
+      items: [
+        {
+          q: '윈도우에서 "Windows의 PC 보호" 창이 떠요',
+          a: '아직 코드 서명 인증서를 붙이지 않아서, 처음 실행할 때 윈도우가 띄우는 안내입니다. "추가 정보"를 누른 뒤 "실행"을 누르면 설치됩니다. 설치 파일은 이 홈페이지나 GitHub 릴리스에서만 받아 주세요.',
+        },
+      ],
+    },
+    {
       id: 'connect',
       h: '연결',
       items: [
@@ -150,6 +160,16 @@ const en: SupportCopy = {
   },
   topicsLabel: 'Topics',
   topics: [
+    {
+      id: 'install',
+      h: 'Installing',
+      items: [
+        {
+          q: 'Windows shows “Windows protected your PC”',
+          a: 'The installer is not code-signed yet, so Windows shows this the first time. Click “More info”, then “Run anyway”. Only download the installer from this site or the GitHub releases page.',
+        },
+      ],
+    },
     {
       id: 'connect',
       h: 'Connecting',

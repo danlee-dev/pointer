@@ -89,14 +89,50 @@ pnpm test
 pnpm build
 ```
 
-## 배포 파일 만들기
+## 출시
+
+버전은 `apps/desktop/package.json` 과 `apps/mobile/app.json` (`version`, iOS `buildNumber`) 에서 같이 올린다.
+
+### 맥 (서명·공증한 dmg)
+
+처음 한 번 (이 컴퓨터에):
+- Xcode → 설정 → 계정 → 팀 → 인증서 관리 → "+" → Developer ID Application
+- `xcrun notarytool store-credentials "pointer-notary" --apple-id <애플 ID> --team-id 45JS5XMNVC` (앱 전용 비밀번호 입력)
 
 ```bash
-pnpm --filter @pointer/desktop dist:mac
-pnpm --filter @pointer/desktop dist:win
+pnpm --filter @pointer/desktop release:mac   # release/<버전>/pointer-mac.dmg (Apple Silicon·Intel 통합)
 ```
 
-맥 서명·공증은 아직 꺼 두었다 (`electron-builder.yml`). 윈도우는 Microsoft Store 용 MSIX 도 같이 만든다.
+자격 증명은 키체인 프로필로만 쓴다. 저장소·환경 파일에 넣지 않는다.
+
+### 윈도우
+
+```bash
+pnpm --filter @pointer/desktop release:win   # release/<버전>/pointer-windows-setup.exe
+```
+
+맥에서 만들 수 있다. 아직 코드 서명을 안 해서 처음 실행할 때 "Windows의 PC 보호" 가 뜬다 (지원 페이지에 안내).
+
+### 올리기
+
+```bash
+gh release create v<버전> apps/desktop/release/<버전>/pointer-mac.dmg apps/desktop/release/<버전>/pointer-windows-setup.exe
+```
+
+홈페이지 다운로드 버튼은 `releases/latest/download/<파일 이름>` 을 가리켜서, 파일 이름이 같으면 따로 고칠 것이 없다.
+
+### iOS (App Store)
+
+```bash
+cd apps/mobile && npx expo prebuild -p ios --no-install && (cd ios && LANG=en_US.UTF-8 pod install)
+xcodebuild -workspace ios/pointer.xcworkspace -scheme pointer -configuration Release \
+  -destination 'generic/platform=iOS' -archivePath build/pointer.xcarchive archive \
+  -allowProvisioningUpdates DEVELOPMENT_TEAM=45JS5XMNVC CODE_SIGN_STYLE=Automatic
+xcodebuild -exportArchive -archivePath build/pointer.xcarchive -exportPath build/export \
+  -exportOptionsPlist <method app-store-connect, destination upload> -allowProvisioningUpdates
+```
+
+Xcode 에 로그인한 계정으로 서명·업로드한다 (배포 인증서는 Apple 이 관리). 스토어 문구·심사 메모는 `docs/store/app-store.md`.
 
 ## 폰 연결이 안 될 때
 
