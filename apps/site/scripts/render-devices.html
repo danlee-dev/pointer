@@ -1,4 +1,4 @@
-<!-- 첫 화면 기기 렌더러. 쓰는 법은 render-devices.mjs 맨 위. 정면·망원으로 찍고, 화면을 반사 없는 검정으로 바꾼 뒤 화면 네 모서리의 이미지 좌표와 모서리 반지름을 같이 저장한다. -->
+<!-- 첫 화면 기기 렌더러. 쓰는 법은 render-devices.mjs 맨 위. 정면·망원으로 찍고, 화면과 베젤을 반사 없는 검정으로 바꾼 뒤 화면 네 모서리의 이미지 좌표와 모서리 반지름을 같이 저장한다. -->
 <!doctype html><meta charset="utf-8">
 <style>body{margin:0;background:#e7e5e4;font:12px system-ui} .row{display:flex;gap:12px;padding:12px;align-items:flex-start} img,canvas{max-width:48vw;background:repeating-conic-gradient(#d6d3d1 0 25%,#f5f5f4 0 50%) 0 0/16px 16px}</style>
 <div class="row" id="out"></div>
@@ -82,6 +82,9 @@ async function render(cfg) {
   // 화면은 꺼진 검은 유리로 (위에 진짜 데모를 얹는다)
   // 반사 없는 검정: 정면에서 조명이 비치면 하얗게 떠서, 얹은 화면 가장자리로 새어 보인다
   screen.material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  // 베젤(화면 둘레 유리)도 같은 검정으로: 회색으로 빛나면 화면 모서리와 바깥 테두리 곡선이 따로 놀아 보인다
+  const black = new Set((params.get('black') ?? cfg.black ?? []).toString().split(',').filter(Boolean));
+  g.scene.traverse((o) => { if (o.isMesh && black.has(o.name)) o.material = new THREE.MeshBasicMaterial({ color: 0x000000 }); });
 
   const box = new THREE.Box3().setFromObject(root);
   const center = box.getCenter(new THREE.Vector3());
@@ -162,7 +165,7 @@ const cinematic = [
   { pos: [0, 4, -1], i: 1.2 },
 ];
 window.configs = {
-  macbook: { name: 'macbook', file: 'macbook_pro_14_inch_m5_black', screen: 'Object_107', rotation: [0, 0, 0], view: [0, 0.05, 1], fov: 12, width: 2600 * scale, height: 2000 * scale, fill: 1, exposure: 1.1, env: 0.45, aces: true, lights: cinematic, save },
+  macbook: { name: 'macbook', file: 'macbook_pro_14_inch_m5_black', screen: 'Object_107', black: ['Object_105'], rotation: [0, 0, 0], view: [0, 0.05, 1], fov: 12, width: 2600 * scale, height: 2000 * scale, fill: 1, exposure: 1.1, env: 0.45, aces: true, lights: cinematic, save },
   iphone: { name: 'iphone', file: 'apple_iphone_15_pro_max_black', screen: 'xXDHkMplTIDAXLN', rotation: [0, Math.PI, 0], view: [0, 0, 1], fov: 12, width: 1400 * scale, height: 2200 * scale, fill: 1, exposure: 1.1, env: 0.45, aces: true, lights: phoneLights, save },
 };
 for (const k of (params.get('only') || 'macbook,iphone').split(',')) await render(window.configs[k]);

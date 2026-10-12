@@ -24,15 +24,9 @@ const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]
 ---
 
 <div class="stage" data-theme="dark" data-demo data-sounds={JSON.stringify(sounds)} data-next={t.demo.next} data-last={t.demo.last}>
-  <!-- 무대 조명: 위에서 떨어지는 빛, 렌즈 플레어. 포인터를 따라 아주 조금 움직인다 (DESIGN.md "무대") -->
+  <!-- 무대 조명: 위에서 떨어지는 은은한 빛 (DESIGN.md "무대") -->
   <div class="lights" aria-hidden="true">
     <span class="top-light"></span>
-    <div class="flare" data-flare>
-      <span class="flare-streak"></span>
-      <span class="ghost ghost-1"></span>
-      <span class="ghost ghost-2"></span>
-      <span class="ghost ghost-3"></span>
-    </div>
   </div>
 
   <div class="stage-grid" role="group" aria-label={t.demo.label}>
@@ -55,7 +49,6 @@ const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]
             <span data-sound-text></span>
           </p>
         </div>
-        <span class="glass" aria-hidden="true"></span>
         </div>
       </div>
     </div>
@@ -130,7 +123,6 @@ const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]
             <span class="r-next-label" data-next-label>{t.demo.next}</span>
           </button>
         </div>
-        <span class="glass" aria-hidden="true"></span>
       </div>
     </div>
   </div>
@@ -145,25 +137,4 @@ const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]
   document.querySelectorAll<HTMLElement>('[data-warp]').forEach((el) => mountWarp(el.closest<HTMLElement>('[data-device]')!, el, JSON.parse(el.dataset.warp!)));
   document.querySelectorAll<HTMLElement>('[data-demo]').forEach(initDemo);
 
-  // 렌즈 플레어: 포인터 위치를 -1..1 로 넘기면 CSS 가 빛 번짐 원을 반대쪽으로 조금 민다 (진짜 렌즈처럼)
-  const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
-  document.querySelectorAll<HTMLElement>('[data-demo]').forEach((stage) => {
-    const flare = stage.querySelector<HTMLElement>('[data-flare]');
-    if (!flare) return;
-    let tx = 0, ty = 0, x = 0, y = 0, raf = 0;
-    const step = () => {
-      x += (tx - x) * 0.08;
-      y += (ty - y) * 0.08;
-      flare.style.setProperty('--fx', x.toFixed(3));
-      flare.style.setProperty('--fy', y.toFixed(3));
-      raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.002 ? requestAnimationFrame(step) : 0;
-    };
-    stage.addEventListener('pointermove', (e) => {
-      if (calm.matches) return;
-      const r = stage.getBoundingClientRect();
-      tx = ((e.clientX - r.left) / r.width) * 2 - 1;
-      ty = ((e.clientY - r.top) / r.height) * 2 - 1;
-      if (!raf) raf = requestAnimationFrame(step);
-    });
-  });
 </script>

@@ -39,61 +39,6 @@
   background: radial-gradient(ellipse 45% 70% at 50% 0%, rgba(255, 248, 238, 0.13), rgba(255, 248, 238, 0.03) 55%, transparent 75%);
 }
 
-/* 렌즈 플레어. 광원 자체는 보이지 않고 (화면 밖 왼쪽 위), 렌즈에 남는 빛줄기와 번짐만 보인다. --fx --fy 는 포인터 (-1..1) */
-.flare {
-  --fx: 0;
-  --fy: 0;
-  position: absolute;
-  left: 9%;
-  top: clamp(40px, 7vw, 96px);
-  width: 0;
-  height: 0;
-}
-/* 아나모픽 렌즈의 가로 빛줄기 */
-.flare-streak {
-  position: absolute;
-  left: -45vw;
-  top: -1px;
-  width: 90vw;
-  height: 2px;
-  /* 가운데를 하얗게 태우면 거기가 광원으로 보인다. 옅은 푸른 결만 */
-  background: linear-gradient(90deg, transparent, rgba(140, 180, 255, 0.08) 25%, rgba(175, 205, 255, 0.2) 50%, rgba(140, 180, 255, 0.08) 75%, transparent);
-  filter: blur(0.6px);
-  mix-blend-mode: screen;
-}
-.flare-streak::after {
-  content: '';
-  position: absolute;
-  inset: -14px 18%;
-  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(150, 190, 255, 0.16), transparent 70%);
-  filter: blur(6px);
-}
-/* 빛 번짐 원: 렌즈 안에서 반사돼 생기는 고스트. 근원 반대쪽 대각선 위에 늘어선다 */
-.ghost {
-  position: absolute;
-  border-radius: 50%;
-  mix-blend-mode: screen;
-  transform: translate(calc(var(--gx) + var(--fx) * var(--gk) * -1px), calc(var(--gy) + var(--fy) * var(--gk) * -1px));
-}
-.ghost-1 {
-  --gx: 20vw; --gy: 10vw; --gk: 18;
-  width: 64px; height: 64px; margin: -32px;
-  background: radial-gradient(circle, rgba(160, 230, 210, 0.10), rgba(160, 230, 210, 0.03) 60%, transparent 72%);
-}
-.ghost-2 {
-  --gx: 36vw; --gy: 19vw; --gk: 34;
-  width: 150px; height: 150px; margin: -75px;
-  background: radial-gradient(circle, transparent 54%, rgba(255, 200, 160, 0.07) 63%, rgba(255, 200, 160, 0.02) 70%, transparent 74%);
-}
-.ghost-3 {
-  --gx: 50vw; --gy: 27vw; --gk: 52;
-  width: 90px; height: 90px; margin: -45px;
-  background: radial-gradient(circle, rgba(200, 180, 255, 0.07), transparent 68%);
-}
-@media (prefers-reduced-motion: no-preference) {
-  .flare-streak { animation: shimmer 7s ease-in-out infinite alternate; }
-}
-@keyframes shimmer { from { opacity: 0.75; } to { opacity: 1; } }
 
 .stage-grid {
   position: relative;
@@ -147,14 +92,6 @@
   background: #000;
   backface-visibility: hidden;
 }
-/* 유리: 화면 위로 비스듬히 지나가는 아주 옅은 빛 */
-.glass {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(115deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 38%, transparent 38.2%);
-}
-
 /* ---------- 맥북 화면 (청중 화면) ---------- */
 
 .screen-wrap { width: 100%; }
