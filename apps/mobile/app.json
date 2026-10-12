@@ -2,7 +2,7 @@
   "expo": {
     "name": "pointer",
     "slug": "pointer",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -10,6 +10,7 @@
     "splash": { "backgroundColor": "#0c0a09" },
     "ios": {
       "bundleIdentifier": "dev.danlee.pointer",
+      "buildNumber": "1",
       "supportsTablet": false,
       "infoPlist": {
         "NSLocalNetworkUsageDescription": "같은 와이파이에 있는 컴퓨터의 pointer 앱과 연결해서 발표를 넘기려면 로컬 네트워크 접근이 필요합니다.",
