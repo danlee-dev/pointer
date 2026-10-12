@@ -108,7 +108,7 @@ const ko = {
   },
   effects: {
     title: ['꽃가루, 두구두구,', '딩동댕'],
-    body: '분위기를 띄울 순간에는 효과를 씁니다. 폰에서 꾹 누르거나 컴퓨터에서 키를 누르고 있는 동안 이어지고, 떼면 마무리됩니다. 두구두구는 누르는 동안 북을 굴리다가 손을 떼면 심벌이 울립니다.',
+    body: '분위기를 띄울 순간에는 효과를 씁니다. 폰에서 꾹 누르거나 컴퓨터에서 키를 누르고 있는 동안 이어지고, 떼면 마무리됩니다. 두구두구는 누르는 동안 팀파니를 굴리다가 손을 떼면 둥 하고 마무리합니다.',
     try: '키를 누르고 있거나, 아래 버튼을 꾹 눌러 보세요.',
     tryTouch: '아래 버튼을 꾹 눌러 보세요.',
     silent: '소리는 컴퓨터에서 납니다. 이 페이지에서는 움직임만 보여 드립니다.',
@@ -278,7 +278,7 @@ const en: LandingCopy = {
   },
   effects: {
     title: ['Confetti.', 'Drumroll.', 'Mic drop.'],
-    body: 'For the moments that need a lift. Hold an effect on your phone, or hold its key on the computer, and it keeps going until you let go. Drumroll rolls while you hold and lands the cymbal when you release.',
+    body: 'For the moments that need a lift. Hold an effect on your phone, or hold its key on the computer, and it keeps going until you let go. Drumroll keeps the timpani rolling while you hold and lands one big hit when you release.',
     try: 'Hold a key, or press and hold a button below.',
     tryTouch: 'Press and hold a button below.',
     silent: 'Sound plays from the computer. This page shows the motion only.',

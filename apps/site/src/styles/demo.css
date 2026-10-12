@@ -230,12 +230,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 18px 10px 8px;
+  padding: 8px 10px;
   font-size: 11px;
   line-height: 1.35;
   text-align: center;
   color: #fff;
-  background: linear-gradient(to top, rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0));
+  /* 앱 리모컨과 같은 진한 띠. 옅은 그라데이션이면 슬라이드 글씨가 비쳐 겹쳐 보인다 */
+  background: rgba(12, 10, 9, 0.82);
   pointer-events: none;
   transition: opacity 0.3s;
 }
