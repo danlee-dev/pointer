@@ -23,18 +23,25 @@ const allCues = Object.keys(t.cue) as Cue[];
 const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]));
 ---
 
-<div class="stage" data-demo data-sounds={JSON.stringify(sounds)} data-next={t.demo.next} data-last={t.demo.last}>
-  <div class="orbs" aria-hidden="true">
-    <span class="orb orb-mint"></span>
-    <span class="orb orb-lavender"></span>
-    <span class="orb orb-peach"></span>
+<div class="stage" data-theme="dark" data-demo data-sounds={JSON.stringify(sounds)} data-next={t.demo.next} data-last={t.demo.last}>
+  <!-- 무대 조명: 위에서 떨어지는 빛, 렌즈 플레어. 포인터를 따라 아주 조금 움직인다 (DESIGN.md "무대") -->
+  <div class="lights" aria-hidden="true">
+    <span class="top-light"></span>
+    <div class="flare" data-flare>
+      <span class="flare-streak"></span>
+      <span class="flare-core"></span>
+      <span class="ghost ghost-1"></span>
+      <span class="ghost ghost-2"></span>
+      <span class="ghost ghost-3"></span>
+    </div>
   </div>
 
   <div class="stage-grid" role="group" aria-label={t.demo.label}>
     <div class="screen-wrap">
       <div class="device device-mac" style={`aspect-ratio: ${MACBOOK.aspect}`} data-device>
+        <span class="spill" aria-hidden="true"></span>
         <img class="device-img" src={MACBOOK.src} alt="" decoding="async" fetchpriority="high" draggable="false" />
-        <div class="device-screen mac-screen" data-theme="dark" data-warp={JSON.stringify(MACBOOK.quad)} style={`width: ${MACBOOK.screen.w}px; height: ${MACBOOK.screen.h}px`}>
+        <div class="device-screen mac-screen" data-warp={JSON.stringify(MACBOOK.quad)} style={`width: ${MACBOOK.screen.w}px; height: ${MACBOOK.screen.h}px; border-radius: ${MACBOOK.screen.radiusTop}px ${MACBOOK.screen.radiusTop}px ${MACBOOK.screen.radiusBottom}px ${MACBOOK.screen.radiusBottom}px`}>
         <div class="screen slide-host" data-screen>
           {slides.map((s, i) => <Slide slide={s} index={i} hidden={i !== 0} />)}
           <canvas class="layer" data-ink aria-hidden="true"></canvas>
@@ -55,8 +62,9 @@ const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]
     </div>
 
     <div class="device device-phone" style={`aspect-ratio: ${IPHONE.aspect}`} data-device>
+      <span class="spill" aria-hidden="true"></span>
       <img class="device-img" src={IPHONE.src} alt="" decoding="async" draggable="false" />
-      <div class="device-screen phone-screen" data-theme="dark" data-warp={JSON.stringify(IPHONE.quad)} style={`width: ${IPHONE.screen.w}px; height: ${IPHONE.screen.h}px`}>
+      <div class="device-screen phone-screen" data-warp={JSON.stringify(IPHONE.quad)} style={`width: ${IPHONE.screen.w}px; height: ${IPHONE.screen.h}px; border-radius: ${IPHONE.screen.radiusTop}px ${IPHONE.screen.radiusTop}px ${IPHONE.screen.radiusBottom}px ${IPHONE.screen.radiusBottom}px`}>
         <span class="island" aria-hidden="true"></span>
         <div class="r-bar">
           <p class="r-page num" aria-live="polite"><b data-page>1</b><span>/ {slides.length}</span></p>
@@ -137,4 +145,26 @@ const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]
   // 화면을 먼저 기기 위에 얹고 나서 데모를 켠다 (캔버스 크기를 얹은 뒤 기준으로 잰다)
   document.querySelectorAll<HTMLElement>('[data-warp]').forEach((el) => mountWarp(el.closest<HTMLElement>('[data-device]')!, el, JSON.parse(el.dataset.warp!)));
   document.querySelectorAll<HTMLElement>('[data-demo]').forEach(initDemo);
+
+  // 렌즈 플레어: 포인터 위치를 -1..1 로 넘기면 CSS 가 빛 번짐 원을 반대쪽으로 조금 민다 (진짜 렌즈처럼)
+  const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+  document.querySelectorAll<HTMLElement>('[data-demo]').forEach((stage) => {
+    const flare = stage.querySelector<HTMLElement>('[data-flare]');
+    if (!flare) return;
+    let tx = 0, ty = 0, x = 0, y = 0, raf = 0;
+    const step = () => {
+      x += (tx - x) * 0.08;
+      y += (ty - y) * 0.08;
+      flare.style.setProperty('--fx', x.toFixed(3));
+      flare.style.setProperty('--fy', y.toFixed(3));
+      raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.002 ? requestAnimationFrame(step) : 0;
+    };
+    stage.addEventListener('pointermove', (e) => {
+      if (calm.matches) return;
+      const r = stage.getBoundingClientRect();
+      tx = ((e.clientX - r.left) / r.width) * 2 - 1;
+      ty = ((e.clientY - r.top) / r.height) * 2 - 1;
+      if (!raf) raf = requestAnimationFrame(step);
+    });
+  });
 </script>

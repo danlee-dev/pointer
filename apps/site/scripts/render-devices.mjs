@@ -4,10 +4,12 @@
 //      - apple_iphone_15_pro_max_black.glb  : Sketchfab, polyman, CC BY 4.0
 //      - macbook_pro_14_inch_m5_black.glb   : Sketchfab Standard (파일 재배포 금지, 렌더 이미지로만 쓴다)
 //   2. node apps/site/scripts/render-devices.mjs
-//   3. 브라우저로 http://127.0.0.1:5190/?scale=1.5&only=macbook&save=1 , ?scale=1&only=iphone&save=1
-//      -> apps/site/.models/out/{macbook,iphone}.png 와 화면 자리 .json
-//   4. cwebp -q 86 -alpha_q 100 -resize 1800 0 macbook.png -o public/devices/macbook.webp (아이폰은 760)
-//   5. .json 의 quad 를 src/data/devices.ts 에 옮긴다
+//   3. 브라우저로 http://127.0.0.1:5190/?scale=1.25&only=macbook&save=1 , ?scale=1&only=iphone&save=1
+//      (맥북은 1.25 보다 크게 하면 그래픽 메모리 한도를 넘어 빈 이미지가 나온다)
+//      -> apps/site/.models/out/{macbook,iphone}.png 와 화면 자리·모서리 반지름 .json
+//   4. cwebp -q 88 -alpha_q 100 macbook.png -o public/devices/macbook.webp
+//      cwebp -q 88 -alpha_q 100 -resize 820 0 iphone.png -o public/devices/iphone.webp
+//   5. .json 의 quad, radius(화면 폭 비율) 를 src/data/devices.ts 에 옮긴다
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';

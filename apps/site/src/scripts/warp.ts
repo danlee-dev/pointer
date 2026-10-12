@@ -49,8 +49,17 @@ export interface Warp {
 
 const warps = new WeakMap<HTMLElement, Warp>();
 
+/** 기기 이미지가 다 그려진 뒤에 기기·화면을 같이 보인다 (화면만 먼저 떠 있지 않게). CSS 의 .device.ready */
+function revealWhenDecoded(frame: HTMLElement) {
+  const img = frame.querySelector<HTMLImageElement>('.device-img');
+  const show = () => frame.classList.add('ready');
+  if (!img) return show();
+  img.decode().then(show, show);
+}
+
 /** frame(기기 이미지 칸) 안의 el 을 quad 자리에 맞춘다. frame 크기가 바뀌면 다시 맞춘다. */
 export function mountWarp(frame: HTMLElement, el: HTMLElement, quad: Quad): Warp {
+  revealWhenDecoded(frame);
   let inv: Mat = [1, 0, 0, 0, 1, 0, 0, 0, 1];
   const fit = () => {
     const W = frame.clientWidth, H = frame.clientHeight;

@@ -1,50 +1,109 @@
 /* 첫 화면 데모: 맥북(청중 화면) + 아이폰(리모컨). 기기는 렌더링한 이미지, 화면 안은 HTML 이다.
    폰 안의 생김새는 packages/remote-web/src/remote.css 를 작게 줄인 것이다. */
 
-.stage { position: relative; margin-top: clamp(48px, 7vw, 88px); }
-
-/* 파스텔 구: 분위기만. 데모 뒤에서 번진다 */
-.orbs {
+.stage {
+  position: relative;
+  margin-top: clamp(48px, 7vw, 88px);
+  padding: clamp(56px, 8vw, 112px) 0 clamp(40px, 5vw, 72px);
+  color: var(--fg);
+}
+/* 화면 끝까지 꽉 찬 어두운 띠. body 가 overflow-x: clip 이라 가로 스크롤은 안 생긴다 */
+.stage::before {
+  content: '';
   position: absolute;
-  inset: -12% -8% -6%;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: #070605;
+  z-index: 0;
+}
+
+/* ---------- 무대 조명 ---------- */
+
+.lights {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
   z-index: 0;
 }
-.orb {
+/* 위에서 떨어지는 은은한 조명 */
+.top-light {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 120vw;
+  height: 70%;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse 45% 70% at 50% 0%, rgba(255, 248, 238, 0.13), rgba(255, 248, 238, 0.03) 55%, transparent 75%);
+}
+
+/* 렌즈 플레어. 빛의 근원은 맥북 왼쪽 위 모서리 근처. --fx --fy 는 포인터 (-1..1) */
+.flare {
+  --fx: 0;
+  --fy: 0;
+  position: absolute;
+  left: 9%;
+  top: clamp(40px, 7vw, 96px);
+  width: 0;
+  height: 0;
+}
+.flare-core {
+  position: absolute;
+  left: -36px;
+  top: -36px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0 6%, rgba(205, 225, 255, 0.45) 18%, rgba(160, 195, 255, 0.12) 42%, transparent 70%);
+  mix-blend-mode: screen;
+}
+/* 아나모픽 렌즈의 가로 빛줄기 */
+.flare-streak {
+  position: absolute;
+  left: -45vw;
+  top: -1px;
+  width: 90vw;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(140, 180, 255, 0.18) 30%, rgba(225, 238, 255, 0.85) 50%, rgba(140, 180, 255, 0.18) 70%, transparent);
+  filter: blur(0.6px);
+  mix-blend-mode: screen;
+}
+.flare-streak::after {
+  content: '';
+  position: absolute;
+  inset: -14px 18%;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(150, 190, 255, 0.16), transparent 70%);
+  filter: blur(6px);
+}
+/* 빛 번짐 원: 렌즈 안에서 반사돼 생기는 고스트. 근원 반대쪽 대각선 위에 늘어선다 */
+.ghost {
   position: absolute;
   border-radius: 50%;
-  opacity: var(--orb-strength);
-  mix-blend-mode: var(--orb-blend);
-  filter: var(--orb-filter);
+  mix-blend-mode: screen;
+  transform: translate(calc(var(--gx) + var(--fx) * var(--gk) * -1px), calc(var(--gy) + var(--fy) * var(--gk) * -1px));
 }
-.orb-mint {
-  left: 2%;
-  top: 4%;
-  width: 46%;
-  aspect-ratio: 1;
-  background: radial-gradient(circle at 50% 50%, var(--orb-mint), transparent 66%);
+.ghost-1 {
+  --gx: 20vw; --gy: 10vw; --gk: 18;
+  width: 64px; height: 64px; margin: -32px;
+  background: radial-gradient(circle, rgba(160, 230, 210, 0.10), rgba(160, 230, 210, 0.03) 60%, transparent 72%);
 }
-.orb-lavender {
-  right: 0;
-  top: 18%;
-  width: 42%;
-  aspect-ratio: 1;
-  background: radial-gradient(circle at 50% 50%, var(--orb-lavender), transparent 66%);
+.ghost-2 {
+  --gx: 36vw; --gy: 19vw; --gk: 34;
+  width: 150px; height: 150px; margin: -75px;
+  background: radial-gradient(circle, transparent 54%, rgba(255, 200, 160, 0.07) 63%, rgba(255, 200, 160, 0.02) 70%, transparent 74%);
 }
-.orb-peach {
-  left: 30%;
-  bottom: 0;
-  width: 44%;
-  aspect-ratio: 1.4;
-  background: radial-gradient(ellipse at 50% 50%, var(--orb-peach), transparent 64%);
+.ghost-3 {
+  --gx: 50vw; --gy: 27vw; --gk: 52;
+  width: 90px; height: 90px; margin: -45px;
+  background: radial-gradient(circle, rgba(200, 180, 255, 0.07), transparent 68%);
 }
 @media (prefers-reduced-motion: no-preference) {
-  .orb-mint { animation: drift-a 22s ease-in-out infinite alternate; }
-  .orb-lavender { animation: drift-b 26s ease-in-out infinite alternate; }
-  .orb-peach { animation: drift-a 30s ease-in-out infinite alternate-reverse; }
+  .flare-streak { animation: shimmer 7s ease-in-out infinite alternate; }
+  .flare-core { animation: shimmer 5s ease-in-out infinite alternate-reverse; }
 }
-@keyframes drift-a { to { transform: translate(6%, 5%) scale(1.06); } }
-@keyframes drift-b { to { transform: translate(-7%, 4%) scale(0.95); } }
+@keyframes shimmer { from { opacity: 0.75; } to { opacity: 1; } }
 
 .stage-grid {
   position: relative;
@@ -72,19 +131,22 @@
   height: 100%;
   pointer-events: none;
 }
-/* 바닥 그림자: 기기 아래 납작한 타원 */
-.device::before {
-  content: '';
+/* 이미지가 그려지기 전엔 숨겼다가 같이 나타난다 (scripts/warp.ts) */
+.device > * { opacity: 0; transition: opacity 0.5s var(--ease-out); }
+.device.ready > * { opacity: 1; }
+
+/* 화면에서 주변으로 번지는 빛 (이미지 뒤) */
+.spill {
   position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: -1%;
-  height: 7%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(28, 25, 23, 0.32), transparent);
-  filter: blur(6px);
+  left: 2%;
+  right: 2%;
+  top: 0;
+  bottom: 22%;
+  background: radial-gradient(ellipse at 50% 45%, rgba(255, 252, 245, 0.34), rgba(255, 252, 245, 0.08) 55%, transparent 72%);
+  filter: blur(44px);
   pointer-events: none;
 }
+.device-phone .spill { top: 8%; bottom: 8%; left: 6%; right: 6%; background: radial-gradient(ellipse at 50% 50%, rgba(210, 220, 255, 0.10), transparent 70%); }
 .device-screen {
   position: absolute;
   left: 0;
@@ -110,7 +172,6 @@
 .mac-screen {
   display: flex;
   align-items: center;
-  border-radius: 14px 14px 4px 4px;
 }
 .screen {
   width: 100%;
@@ -186,7 +247,6 @@
   flex-direction: column;
   gap: 9px;
   padding: 44px 11px 12px;
-  border-radius: 40px;
   background: var(--bg);
 }
 .island {
@@ -360,7 +420,7 @@
 
 /* ---------- 배치 ---------- */
 
-.device-phone::before { left: 18%; right: 18%; bottom: -0.5%; height: 3%; }
+
 
 /* 좁은 화면: 폰을 조작하는 동안 맥북이 위에 붙어 있게 */
 @media (max-width: 1023px) {
@@ -370,19 +430,21 @@
     z-index: 3;
     max-width: 720px;
   }
-  .device-phone { width: min(78vw, 340px); }
+  .device-phone { width: min(78vw, 340px); margin-top: 24px; }
 }
 
-/* 넓은 화면: 맥북 오른쪽 앞에 아이폰이 선다 */
+/* 넓은 화면: 맥북과 아이폰을 나란히, 바닥을 맞춰 세운다. 아이폰이 조금 앞에 있어 더 크다 */
 @media (min-width: 1024px) {
   .stage-grid {
-    grid-template-columns: minmax(0, 1fr) clamp(290px, 27vw, 380px);
+    grid-template-columns: minmax(0, 760px) clamp(250px, 23vw, 300px);
+    justify-content: center;
     align-items: end;
-    gap: 0;
-    padding-bottom: 8px;
+    column-gap: clamp(32px, 4vw, 56px);
   }
-  /* 이미지 오른쪽 끝이 곧 맥북 화면 끝이라 겹치면 화면을 가린다. 바닥 모서리만 살짝 맞닿게 */
-  .screen-wrap { margin-right: -3%; }
-  .device-phone { position: relative; z-index: 2; margin-bottom: -3%; }
-  .stage-caption { text-align: left; margin-top: 20px; max-width: 34rem; }
+  .device-phone { margin-bottom: -1.5%; }
+  /* 바닥 반사 (Chromium, Safari). 넓은 화면에서만: 좁은 화면은 기기가 위아래로 쌓여 반사가 아래 기기를 덮는다.
+     크롬은 -webkit-box-reflect: none 을 버려서, 끄는 대신 여기서만 켠다 */
+  .stage .device-mac,
+  .stage .device-phone { -webkit-box-reflect: below 2px linear-gradient(transparent 76%, rgba(255, 255, 255, 0.10)); }
+  .stage-caption { text-align: center; margin-top: 56px; }
 }

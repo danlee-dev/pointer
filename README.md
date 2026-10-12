@@ -76,6 +76,7 @@ pnpm --filter @pointer/site build    # apps/site/dist
 (`src/data/devices.ts`, `src/scripts/warp.ts`). 모델 원본은 저장소에 올리지 않는다:
 아이폰은 Sketchfab polyman 의 CC BY 4.0 (사이트 아래에 출처 표기), 맥북은 Sketchfab Standard (파일 재배포 금지, 렌더 이미지로만 쓴다).
 다시 렌더링하는 법은 `apps/site/scripts/render-devices.mjs` 맨 위에 있다.
+효과 버튼 아이콘은 Microsoft Fluent Emoji 3D (MIT, 고지문은 `apps/site/public/icons/fx/LICENSE-fluentui-emoji.txt`). 딩동댕 O 는 앱 안의 O 와 같은 파랑으로 색만 돌렸다.
 
 공유 이미지(og.png)는
 `node apps/site/scripts/build-og.mjs <@resvg/resvg-js 가 있는 node_modules>` 로 다시 만든다.
