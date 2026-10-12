@@ -1,4 +1,5 @@
-/* 첫 화면 데모: 청중 화면 + 폰 리모컨 모형. 폰 안의 생김새는 packages/remote-web/src/remote.css 를 작게 줄인 것이다. */
+/* 첫 화면 데모: 맥북(청중 화면) + 아이폰(리모컨). 기기는 렌더링한 이미지, 화면 안은 HTML 이다.
+   폰 안의 생김새는 packages/remote-web/src/remote.css 를 작게 줄인 것이다. */
 
 .stage { position: relative; margin-top: clamp(48px, 7vw, 88px); }
 
@@ -53,20 +54,66 @@
   gap: 28px;
 }
 
-/* ---------- 청중 화면 ---------- */
+/* ---------- 기기 ---------- */
+/* 이미지 위 화면 자리에 .device-screen 을 원근 변환으로 얹는다 (scripts/warp.ts). 자리 좌표는 data/devices.ts */
 
-.screen-wrap {
+.device {
+  position: relative;
   width: 100%;
-  color: var(--fg);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
-.monitor {
-  padding: clamp(6px, 0.9vw, 12px);
-  border-radius: var(--r-lg);
-  background: var(--bg-raised);
-  box-shadow: var(--shadow-raised);
+.device-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+/* 바닥 그림자: 기기 아래 납작한 타원 */
+.device::before {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -1%;
+  height: 7%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(28, 25, 23, 0.32), transparent);
+  filter: blur(6px);
+  pointer-events: none;
+}
+.device-screen {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  overflow: hidden;
+  color: var(--fg);
+  background: #000;
+  backface-visibility: hidden;
+}
+/* 유리: 화면 위로 비스듬히 지나가는 아주 옅은 빛 */
+.glass {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 38%, transparent 38.2%);
+}
+
+/* ---------- 맥북 화면 (청중 화면) ---------- */
+
+.screen-wrap { width: 100%; }
+/* 맥북 화면은 1.54:1, 슬라이드는 16:9. 전체 화면 발표처럼 위아래가 검다 */
+.mac-screen {
+  display: flex;
+  align-items: center;
+  border-radius: 14px 14px 4px 4px;
 }
 .screen {
-  border-radius: max(var(--r-sm), calc(var(--r-lg) - 10px));
+  width: 100%;
   background: var(--screen-black);
   touch-action: pan-y;
 }
@@ -132,48 +179,15 @@
 }
 @keyframes eq { from { transform: scaleY(0.25); } to { transform: scaleY(1); } }
 
-/* ---------- 폰 ---------- */
-
-.phone {
-  --phone-w: 292px;
-  position: relative;
-  width: var(--phone-w);
-  padding: 9px;
-  border-radius: 46px;
-  background: var(--bg-raised);
-  box-shadow: inset 0 0 0 1.5px var(--surface-press), var(--shadow-raised);
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-}
-/* 옆 버튼 (볼륨 둘, 전원 하나) */
-.phone::before,
-.phone::after {
-  content: '';
-  position: absolute;
-  width: 3px;
-  border-radius: 2px;
-  background: var(--surface-press);
-}
-.phone::before {
-  left: -3px;
-  top: 112px;
-  height: 96px;
-  background: linear-gradient(var(--surface-press) 0 42%, transparent 42% 58%, var(--surface-press) 58%);
-}
-.phone::after { right: -3px; top: 132px; height: 62px; }
+/* ---------- 아이폰 화면 (리모컨) ---------- */
 
 .phone-screen {
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: 9px;
-  height: 548px;
-  padding: 40px 11px 11px;
-  border-radius: 37px;
+  padding: 44px 11px 12px;
+  border-radius: 40px;
   background: var(--bg);
-  overflow: hidden;
 }
 .island {
   position: absolute;
@@ -346,30 +360,29 @@
 
 /* ---------- 배치 ---------- */
 
-/* 좁은 화면: 폰을 조작하는 동안 청중 화면이 위에 붙어 있게 */
+.device-phone::before { left: 18%; right: 18%; bottom: -0.5%; height: 3%; }
+
+/* 좁은 화면: 폰을 조작하는 동안 맥북이 위에 붙어 있게 */
 @media (max-width: 1023px) {
   .screen-wrap {
     position: sticky;
-    top: 10px;
+    top: 6px;
     z-index: 3;
     max-width: 720px;
   }
+  .device-phone { width: min(78vw, 340px); }
 }
 
-/* 넓은 화면: 청중 화면 오른쪽 아래에 폰이 겹쳐 선다 */
+/* 넓은 화면: 맥북 오른쪽 앞에 아이폰이 선다 */
 @media (min-width: 1024px) {
   .stage-grid {
-    grid-template-columns: minmax(0, 1fr) 292px;
+    grid-template-columns: minmax(0, 1fr) clamp(290px, 27vw, 380px);
     align-items: end;
     gap: 0;
     padding-bottom: 8px;
   }
-  .screen-wrap { margin-bottom: 64px; }
-  .phone { margin-left: -72px; }
+  /* 이미지 오른쪽 끝이 곧 맥북 화면 끝이라 겹치면 화면을 가린다. 바닥 모서리만 살짝 맞닿게 */
+  .screen-wrap { margin-right: -3%; }
+  .device-phone { position: relative; z-index: 2; margin-bottom: -3%; }
   .stage-caption { text-align: left; margin-top: 20px; max-width: 34rem; }
-}
-
-@supports (corner-shape: squircle) {
-  .phone { border-radius: 64px; }
-  .phone-screen { border-radius: 52px; }
 }

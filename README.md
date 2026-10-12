@@ -70,7 +70,14 @@ pnpm --filter @pointer/site build    # apps/site/dist
 ```
 
 제품 이름, 다운로드·App Store 주소, GitHub, 문의 창구는 `apps/site/src/site.ts` 한 곳에 있다.
-링크가 `null` 이면 화면에 "준비 중" 으로 나온다. 공유 이미지(og.png)는
+링크가 `null` 이면 화면에 "준비 중" 으로 나온다.
+
+첫 화면의 맥북·아이폰은 3D 모델을 렌더링한 이미지(`public/devices/`)이고, 그 화면 자리에 진짜 데모를 원근에 맞춰 얹는다
+(`src/data/devices.ts`, `src/scripts/warp.ts`). 모델 원본은 저장소에 올리지 않는다:
+아이폰은 Sketchfab polyman 의 CC BY 4.0 (사이트 아래에 출처 표기), 맥북은 Sketchfab Standard (파일 재배포 금지, 렌더 이미지로만 쓴다).
+다시 렌더링하는 법은 `apps/site/scripts/render-devices.mjs` 맨 위에 있다.
+
+공유 이미지(og.png)는
 `node apps/site/scripts/build-og.mjs <@resvg/resvg-js 가 있는 node_modules>` 로 다시 만든다.
 
 ## 검사

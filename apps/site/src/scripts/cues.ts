@@ -770,12 +770,12 @@ export class CueStage {
   }
 
   private resize() {
-    const r = this.canvas.getBoundingClientRect();
+    // 변환 전 크기 (기기 화면에 원근으로 얹혀 있어도 그림 좌표는 이 기준)
     this.dpr = Math.min(2, window.devicePixelRatio || 1);
-    this.w = r.width;
-    this.h = r.height;
-    this.canvas.width = Math.round(r.width * this.dpr);
-    this.canvas.height = Math.round(r.height * this.dpr);
+    this.w = this.canvas.clientWidth;
+    this.h = this.canvas.clientHeight;
+    this.canvas.width = Math.max(1, Math.round(this.w * this.dpr));
+    this.canvas.height = Math.max(1, Math.round(this.h * this.dpr));
   }
 
   private ctx(): Ctx {

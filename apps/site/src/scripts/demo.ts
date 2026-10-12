@@ -4,6 +4,7 @@
 
 import { CueStage, type Cue } from './cues';
 import { holdButton, registerKeys } from './keys';
+import { pointIn } from './warp';
 
 type Tool = 'laser' | 'spotlight' | 'magnify' | 'pen';
 interface Point {
@@ -18,13 +19,15 @@ interface Stroke {
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
 function fitCanvas(c: HTMLCanvasElement) {
-  const r = c.getBoundingClientRect();
+  // 변환 전 크기로 잰다. 기기 화면에 원근으로 얹혀 있으면 getBoundingClientRect 는 기울어진 바깥 상자다.
+  const w = c.clientWidth;
+  const h = c.clientHeight;
   const dpr = Math.min(2, window.devicePixelRatio || 1);
-  c.width = Math.max(1, Math.round(r.width * dpr));
-  c.height = Math.max(1, Math.round(r.height * dpr));
+  c.width = Math.max(1, Math.round(w * dpr));
+  c.height = Math.max(1, Math.round(h * dpr));
   const g = c.getContext('2d')!;
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  return { g, w: r.width, h: r.height };
+  return { g, w, h };
 }
 
 function formatClock(ms: number) {
@@ -275,8 +278,8 @@ export function initDemo(root: HTMLElement) {
 
   let pressing: number | null = null;
   const norm = (e: PointerEvent): Point => {
-    const r = pad.getBoundingClientRect();
-    return { x: clamp01((e.clientX - r.left) / r.width), y: clamp01((e.clientY - r.top) / r.height) };
+    const p = pointIn(pad, e.clientX, e.clientY);
+    return { x: clamp01(p.x), y: clamp01(p.y) };
   };
   const placeFinger = (p: Point) => {
     finger.style.transform = `translate(${p.x * pad.clientWidth}px, ${p.y * pad.clientHeight}px)`;

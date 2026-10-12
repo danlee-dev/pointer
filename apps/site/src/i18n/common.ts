@@ -15,6 +15,8 @@ const ko = {
     support: '지원',
     github: 'GitHub',
     language: '언어',
+    // CC BY 4.0: 만든 사람, 원본, 라이선스, 바꾼 점을 밝힌다
+    credit: { before: '아이폰 3D 모델', by: 'polyman', license: 'CC BY 4.0', change: '화면을 바꿔 렌더링' },
   },
 };
 
@@ -33,6 +35,7 @@ const en: CommonCopy = {
     support: 'Support',
     github: 'GitHub',
     language: 'Language',
+    credit: { before: 'iPhone 3D model', by: 'polyman', license: 'CC BY 4.0', change: 'rendered with a new screen' },
   },
 };
 

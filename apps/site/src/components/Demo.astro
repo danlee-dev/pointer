@@ -1,10 +1,12 @@
 ---
-// 첫 화면 데모: 위는 청중 화면, 아래(넓은 화면에선 오른쪽)는 폰 리모컨.
-// 폰 패드를 누른 채 움직이면 레이저·스포트라이트·돋보기·펜이 청중 화면에 나타나고, 다음을 누르면 장이 넘어간다.
-// 폰과 청중 화면 모형은 페이지 테마와 상관없이 어둡게 고정한다 (DESIGN.md).
+// 첫 화면 데모: 맥북(청중 화면)과 아이폰(리모컨). 기기는 3D 모델을 렌더링한 이미지이고,
+// 그 화면 자리에 진짜로 움직이는 HTML 화면을 원근에 맞춰 얹는다 (scripts/warp.ts).
+// 폰 패드를 누른 채 움직이면 레이저·스포트라이트·돋보기·펜이 맥북 화면에 나타나고, 다음을 누르면 장이 넘어간다.
+// 화면 안은 페이지 테마와 상관없이 어둡게 고정한다 (DESIGN.md).
 import Slide from './Slide.astro';
 import Icon from './Icon.astro';
 import { landing, type Cue, type Tool } from '../i18n/landing';
+import { IPHONE, MACBOOK } from '../data/devices';
 import type { Lang } from '../site';
 import '../styles/demo.css';
 
@@ -29,8 +31,10 @@ const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]
   </div>
 
   <div class="stage-grid" role="group" aria-label={t.demo.label}>
-    <div class="screen-wrap" data-theme="dark">
-      <div class="monitor">
+    <div class="screen-wrap">
+      <div class="device device-mac" style={`aspect-ratio: ${MACBOOK.aspect}`} data-device>
+        <img class="device-img" src={MACBOOK.src} alt="" decoding="async" fetchpriority="high" draggable="false" />
+        <div class="device-screen mac-screen" data-theme="dark" data-warp={JSON.stringify(MACBOOK.quad)} style={`width: ${MACBOOK.screen.w}px; height: ${MACBOOK.screen.h}px`}>
         <div class="screen slide-host" data-screen>
           {slides.map((s, i) => <Slide slide={s} index={i} hidden={i !== 0} />)}
           <canvas class="layer" data-ink aria-hidden="true"></canvas>
@@ -45,11 +49,14 @@ const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]
             <span data-sound-text></span>
           </p>
         </div>
+        <span class="glass" aria-hidden="true"></span>
+        </div>
       </div>
     </div>
 
-    <div class="phone" data-theme="dark">
-      <div class="phone-screen">
+    <div class="device device-phone" style={`aspect-ratio: ${IPHONE.aspect}`} data-device>
+      <img class="device-img" src={IPHONE.src} alt="" decoding="async" draggable="false" />
+      <div class="device-screen phone-screen" data-theme="dark" data-warp={JSON.stringify(IPHONE.quad)} style={`width: ${IPHONE.screen.w}px; height: ${IPHONE.screen.h}px`}>
         <span class="island" aria-hidden="true"></span>
         <div class="r-bar">
           <p class="r-page num" aria-live="polite"><b data-page>1</b><span>/ {slides.length}</span></p>
@@ -116,6 +123,7 @@ const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]
             <span class="r-next-label" data-next-label>{t.demo.next}</span>
           </button>
         </div>
+        <span class="glass" aria-hidden="true"></span>
       </div>
     </div>
   </div>
@@ -125,5 +133,8 @@ const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]
 
 <script>
   import { initDemo } from '../scripts/demo';
+  import { mountWarp } from '../scripts/warp';
+  // 화면을 먼저 기기 위에 얹고 나서 데모를 켠다 (캔버스 크기를 얹은 뒤 기준으로 잰다)
+  document.querySelectorAll<HTMLElement>('[data-warp]').forEach((el) => mountWarp(el.closest<HTMLElement>('[data-device]')!, el, JSON.parse(el.dataset.warp!)));
   document.querySelectorAll<HTMLElement>('[data-demo]').forEach(initDemo);
 </script>

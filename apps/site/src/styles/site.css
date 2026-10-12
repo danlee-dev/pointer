@@ -212,6 +212,7 @@ h1, h2, h3, h4 { font-weight: inherit; }
 .footer-links a:hover { color: var(--fg-muted); }
 .footer-links a[aria-current='true'] { font-weight: 600; }
 .footer-bottom { margin-top: 48px; display: flex; flex-wrap: wrap; gap: 8px 24px; font-size: 0.875rem; color: var(--fg-muted); }
+.footer-bottom a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- 문서 페이지 (개인정보, 지원) ---------- */
 

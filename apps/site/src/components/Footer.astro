@@ -38,6 +38,13 @@ const year = new Date().getFullYear();
         </div>
       </div>
     </div>
-    <p class="footer-bottom"><span class="num">© {year} {site.name}</span></p>
+    <p class="footer-bottom">
+      <span class="num">© {year} {site.name}</span>
+      <span>
+        {t.footer.credit.before}:{' '}
+        <a href="https://sketchfab.com/3d-models/apple-iphone-15-pro-max-black-df17520841214c1792fb8a44c6783ee7" rel="noopener">{t.footer.credit.by}</a>,{' '}
+        <a href="https://creativecommons.org/licenses/by/4.0/" rel="noopener license">{t.footer.credit.license}</a>, {t.footer.credit.change}
+      </span>
+    </p>
   </div>
 </footer>
