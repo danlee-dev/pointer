@@ -162,27 +162,42 @@ export function correct(ctx: Ctx, out: AudioNode, t: number) {
   chime(ctx, out, t + 0.34, 783.99, 0.48, 1.3);
 }
 
-/** 땡: 낮게 '뿌-뿌'. 부저처럼 찢어지는 소리 대신 둥근 소리 */
+/** 땡: 낮게 '뿌-뿌우'. 두 번째 음은 살짝 처지며 잦아든다 (뚝 끊기지 않게) */
 export function wrong(ctx: Ctx, out: AudioNode, t: number) {
   const lp = filter(ctx, 'lowpass', 900);
   lp.connect(out);
-  for (const [at, f, len] of [
-    [0, 233.1, 0.16],
-    [0.2, 174.6, 0.42],
-  ] as const) {
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t + at);
-    g.gain.exponentialRampToValueAtTime(0.2, t + at + 0.015);
-    g.gain.setValueAtTime(0.17, t + at + len - 0.06);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + at + len);
-    g.connect(lp);
-    const o = ctx.createOscillator();
-    o.type = 'square';
-    o.frequency.value = f;
-    o.connect(g);
-    o.start(t + at);
-    o.stop(t + at + len + 0.02);
-  }
+  // 첫 음: 짧게
+  const g1 = ctx.createGain();
+  g1.gain.setValueAtTime(0.0001, t);
+  g1.gain.exponentialRampToValueAtTime(0.2, t + 0.015);
+  g1.gain.setValueAtTime(0.18, t + 0.12);
+  g1.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+  g1.connect(lp);
+  const o1 = ctx.createOscillator();
+  o1.type = 'square';
+  o1.frequency.value = 233.1;
+  o1.connect(g1);
+  o1.start(t);
+  o1.stop(t + 0.22);
+  // 둘째 음: 조금 버티다가 음이 내려앉으며 0.4초에 걸쳐 사라진다. 소리도 점점 먹먹해진다.
+  const t2 = t + 0.22;
+  const g2 = ctx.createGain();
+  g2.gain.setValueAtTime(0.0001, t2);
+  g2.gain.exponentialRampToValueAtTime(0.2, t2 + 0.015);
+  g2.gain.setValueAtTime(0.18, t2 + 0.22);
+  g2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.65);
+  const lp2 = filter(ctx, 'lowpass', 900);
+  lp2.frequency.setValueAtTime(900, t2 + 0.2);
+  lp2.frequency.exponentialRampToValueAtTime(300, t2 + 0.65);
+  g2.connect(lp2).connect(out);
+  const o2 = ctx.createOscillator();
+  o2.type = 'square';
+  o2.frequency.setValueAtTime(174.6, t2);
+  o2.frequency.setValueAtTime(174.6, t2 + 0.22);
+  o2.frequency.exponentialRampToValueAtTime(155, t2 + 0.65);
+  o2.connect(g2);
+  o2.start(t2);
+  o2.stop(t2 + 0.7);
 }
 
 /** 마이크가 바닥에 쿵. 처음 닿을 땐 스피커로 증폭된 낮은 울림이 같이 난다 */
@@ -247,8 +262,9 @@ class Roll {
 
 class Applause {
   private bus: GainNode;
+  private bedGain: GainNode;
   private bed: AudioBufferSourceNode;
-  private clappers: { next: number; period: number; v: number }[];
+  private clappers: { next: number; period: number; v: number; stopAt: number }[];
   private endAt: number | null = null;
   private timer: ReturnType<typeof setInterval>;
 
@@ -266,11 +282,11 @@ class Applause {
     this.bed = ctx.createBufferSource();
     this.bed.buffer = noise;
     this.bed.loop = true;
-    const bedGain = ctx.createGain();
-    bedGain.gain.value = 0.12;
-    this.bed.connect(filter(ctx, 'bandpass', 1600, 0.4)).connect(bedGain).connect(this.bus);
+    this.bedGain = ctx.createGain();
+    this.bedGain.gain.value = 0.12;
+    this.bed.connect(filter(ctx, 'bandpass', 1600, 0.4)).connect(this.bedGain).connect(this.bus);
     this.bed.start(now);
-    this.clappers = Array.from({ length: 36 }, () => ({ next: now + rand(0, 0.45), period: 1 / rand(3.2, 5), v: rand(0.35, 1) }));
+    this.clappers = Array.from({ length: 36 }, () => ({ next: now + rand(0, 0.45), period: 1 / rand(3.2, 5), v: rand(0.35, 1), stopAt: Infinity }));
     this.timer = setInterval(this.pump, 25);
     this.pump();
   }
@@ -278,24 +294,30 @@ class Applause {
   private pump = () => {
     const until = this.ctx.currentTime + LOOKAHEAD;
     for (const c of this.clappers) {
-      while (c.next < until && (this.endAt === null || c.next < this.endAt)) {
-        clap(this.ctx, this.bus, this.noise, c.next, c.v * rand(0.6, 1));
-        c.next += c.period * rand(0.92, 1.08);
+      while (c.next < until && c.next < c.stopAt) {
+        // 그칠 때가 가까운 사람은 박수가 느려지고 약해진다
+        const left = c.stopAt === Infinity ? 1 : Math.max(0, Math.min(1, (c.stopAt - c.next) / 0.8));
+        clap(this.ctx, this.bus, this.noise, c.next, c.v * rand(0.6, 1) * (0.5 + 0.5 * left));
+        c.next += c.period * rand(0.92, 1.08) * (1 + (1 - left) * 0.35);
       }
     }
-    if (this.endAt !== null && this.ctx.currentTime > this.endAt) this.stop();
+    if (this.endAt !== null && this.ctx.currentTime > this.endAt) this.end();
   };
 
-  /** delay 초 뒤부터 fade 초에 걸쳐 잦아든다 */
-  finish(delay: number, fade = 2) {
+  /** delay 초 뒤부터 fade 초 동안 사람들이 한 명씩 박수를 멈춘다 */
+  finish(delay: number, fade = 2.2) {
     if (this.endAt !== null) return;
     const t = this.ctx.currentTime + delay;
-    this.endAt = t + fade;
-    this.bus.gain.cancelAndHoldAtTime(t);
-    this.bus.gain.exponentialRampToValueAtTime(0.0001, t + fade);
+    this.endAt = t + fade + 0.2;
+    // 일찍 그치는 사람이 더 많게 (몇 명만 끝까지 친다)
+    for (const c of this.clappers) c.stopAt = t + fade * Math.pow(Math.random(), 1.6);
+    // 깔린 웅성임은 박수보다 먼저 빠진다
+    this.bedGain.gain.cancelAndHoldAtTime(t);
+    this.bedGain.gain.exponentialRampToValueAtTime(0.0001, t + fade * 0.6);
   }
 
-  stop() {
+  /** 다 끝났을 때 */
+  private end() {
     clearInterval(this.timer);
     try {
       this.bed.stop();
@@ -303,7 +325,79 @@ class Applause {
       // 이미 멈춤
     }
   }
+
+  /** 도중에 치울 때: 뚝 끊지 않고 0.15초에 걸쳐 줄인다 */
+  stop() {
+    const t = this.ctx.currentTime;
+    clearInterval(this.timer);
+    this.bus.gain.cancelAndHoldAtTime(t);
+    this.bus.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    try {
+      this.bed.stop(t + 0.2);
+    } catch {
+      // 이미 멈춤
+    }
+  }
 }
+
+/**
+ * 녹음한 팀파니 롤 (CC0, docs/sounds.md). 이음새 없이 다듬은 구간을 누르는 동안 되풀이하며
+ * 3.5초에 걸쳐 키우고, 떼면 롤을 빠르게 거두고 같은 북을 한 번 '둥' 친다.
+ */
+class SampleRoll {
+  private src: AudioBufferSourceNode;
+  private gain: GainNode;
+  private done = false;
+
+  constructor(
+    private ctx: Ctx,
+    private out: AudioNode,
+    loop: AudioBuffer,
+    private hit: AudioBuffer,
+  ) {
+    const t = ctx.currentTime + 0.01;
+    this.gain = ctx.createGain();
+    this.gain.gain.setValueAtTime(0.0001, t);
+    this.gain.gain.exponentialRampToValueAtTime(ROLL_GAIN * 0.45, t + 0.12);
+    this.gain.gain.linearRampToValueAtTime(ROLL_GAIN, t + 3.5);
+    this.gain.connect(out);
+    this.src = ctx.createBufferSource();
+    this.src.buffer = loop;
+    this.src.loop = true;
+    this.src.connect(this.gain);
+    // 매번 같은 자리에서 시작하면 똑같이 들리니 반복 구간 안 아무 데서나 시작한다
+    this.src.start(t, Math.random() * loop.duration);
+  }
+
+  finish(delay: number) {
+    if (this.done) return;
+    this.done = true;
+    const t = this.ctx.currentTime + delay;
+    this.gain.gain.cancelAndHoldAtTime(t);
+    this.gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+    this.src.stop(t + 0.25);
+    const h = this.ctx.createBufferSource();
+    h.buffer = this.hit;
+    const g = this.ctx.createGain();
+    g.gain.value = HIT_GAIN;
+    h.connect(g).connect(this.out);
+    h.start(t);
+  }
+
+  /** 도중에 치울 때: 뚝 끊지 않고 0.1초에 걸쳐 줄인다. 이미 '둥' 친 뒤면 울림은 그대로 둔다 */
+  stop() {
+    if (this.done) return;
+    this.done = true;
+    const t = this.ctx.currentTime;
+    this.gain.gain.cancelAndHoldAtTime(t);
+    this.gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    this.src.stop(t + 0.12);
+  }
+}
+
+/** 녹음 크기 맞춤: 다른 효과음과 비슷하게 들리도록 (오프라인으로 재서 정했다) */
+const ROLL_GAIN = 1;
+const HIT_GAIN = 1.7;
 
 // ---------- 마지막 단 ----------
 // 노트북·프로젝터 스피커에서 귀가 아프지 않게: 높은 소리를 깎고, 전체를 낮추고, 겹쳐도 안 찢어지게 눌러 준다.
@@ -326,6 +420,24 @@ export function buildMaster(ctx: Ctx, dest: AudioNode): AudioNode {
   return master;
 }
 
+// ---------- 녹음 파일 ----------
+// public/sounds 에 있다 (만드는 법: scripts/make-sounds.py). 렌더러 페이지 기준 상대 주소로 읽는다.
+
+export async function loadTimpani(ctx: BaseAudioContext): Promise<{ rolls: AudioBuffer[]; hit: AudioBuffer } | null> {
+  const get = async (name: string) => {
+    const res = await fetch(new URL(`sounds/${name}`, document.baseURI).href);
+    if (!res.ok) throw new Error(`${name}: ${res.status}`);
+    return ctx.decodeAudioData(await res.arrayBuffer());
+  };
+  try {
+    const [a, b, hit] = await Promise.all([get('timpani-roll-a.flac'), get('timpani-roll-b.flac'), get('timpani-hit.flac')]);
+    return { rolls: [a, b], hit };
+  } catch (err) {
+    console.warn('[cues] 팀파니 녹음을 못 읽음, 합성 북으로 대신', err);
+    return null;
+  }
+}
+
 // ---------- 창 하나에 하나 ----------
 
 export interface Hold {
@@ -339,6 +451,8 @@ export class CueSound {
   private noise!: AudioBuffer;
   private holds = new Set<Hold>();
 
+  private timpani: { rolls: AudioBuffer[]; hit: AudioBuffer } | null = null;
+
   private get c(): AudioContext {
     if (!this.ctx) {
       const ctx = new AudioContext({ latencyHint: 'interactive' });
@@ -346,13 +460,23 @@ export class CueSound {
       this.out = master;
       this.noise = makeNoise(ctx, 2);
       this.ctx = ctx;
+      void loadTimpani(ctx).then((t) => (this.timpani = t));
     }
     if (this.ctx.state === 'suspended') void this.ctx.resume();
     return this.ctx;
   }
 
+  /** 첫 두구두구가 늦지 않게 녹음을 미리 읽어 둔다 */
+  preload() {
+    void this.c;
+  }
+
   drumroll(): Hold {
-    return this.track(new Roll(this.c, this.out, this.noise));
+    const ctx = this.c;
+    const t = this.timpani;
+    // 녹음을 아직 못 읽었거나 읽다 실패했으면 합성 북으로 대신한다
+    if (!t) return this.track(new Roll(ctx, this.out, this.noise));
+    return this.track(new SampleRoll(ctx, this.out, t.rolls[Math.floor(Math.random() * t.rolls.length)]!, t.hit));
   }
 
   applause(): Hold {

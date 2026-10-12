@@ -214,7 +214,7 @@ class ApplauseActor implements Actor {
     this.held = false;
     const wait = Math.max(0, this.start + MIN_APPLAUSE_MS - now);
     this.hold?.finish(wait / 1000);
-    this.endAt = now + wait + 2100;
+    this.endAt = now + wait + 2700; // 소리 쪽에서 한 명씩 그치는 2.4초보다 조금 길게
   }
 
   update(now: number) {
@@ -617,6 +617,7 @@ export class CueEngine {
       this.world?.resize(this.w, this.h, this.dpr);
     });
     this.ro.observe(host);
+    getSound().preload();
   }
 
   /** WebGL 을 못 쓰는 환경이면 3D 물체 없이 소리와 2D 효과만 낸다 */
