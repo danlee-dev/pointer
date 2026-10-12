@@ -26,9 +26,15 @@ export function Notes({ deckId, index, initial, t }: Props) {
         pending.current = null;
       }
     };
-    // initial 은 장이 바뀔 때만 다시 읽는다. 저장할 때마다 되돌아오는 값으로 덮으면 입력이 튄다.
+    // 장이 바뀔 때 정리만 한다. 바깥에서 바뀐 메모는 아래 effect 가 받는다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deckId, index]);
+
+  // AI(MCP)나 다른 곳에서 이 장의 메모를 바꾸면 화면에도 반영한다.
+  // 단, 사용자가 입력 중이면(저장 대기 중) 덮지 않는다.
+  useEffect(() => {
+    if (!pending.current) setText(initial);
+  }, [initial]);
 
   const onChange = (v: string) => {
     setText(v);

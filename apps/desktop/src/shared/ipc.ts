@@ -82,6 +82,17 @@ export interface ThumbRequest {
   index: number;
 }
 
+export interface TextRequest {
+  reqId: number;
+  deckId: string;
+  index: number;
+}
+
+/** AI(MCP) 연결 주소. 이 컴퓨터 안에서만 열린다 */
+export interface AiConnection {
+  url: string | null;
+}
+
 export interface DesktopApi {
   platform: 'darwin' | 'win32' | 'linux';
 
@@ -137,7 +148,13 @@ export interface DesktopApi {
     loaded(r: WorkerLoadResult): void;
     onThumbRequest(cb: (r: ThumbRequest) => void): () => void;
     thumbDone(deckId: string, index: number, jpeg: Uint8Array | null): void;
+    onTextRequest(cb: (r: TextRequest) => void): () => void;
+    textDone(reqId: number, text: string | null): void;
   };
+
+  // AI 대본 (MCP)
+  getAiConnection(): Promise<AiConnection>;
+  copyText(text: string): void;
 }
 
 export const IPC = {
@@ -179,4 +196,8 @@ export const IPC = {
   workerLoaded: 'worker:loaded',
   workerThumbRequest: 'worker:thumbRequest',
   workerThumbDone: 'worker:thumbDone',
+  workerTextRequest: 'worker:textRequest',
+  workerTextDone: 'worker:textDone',
+  getAiConnection: 'ai:getConnection',
+  copyText: 'app:copyText',
 } as const;

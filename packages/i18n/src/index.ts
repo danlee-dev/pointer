@@ -118,6 +118,16 @@ const ko = {
     submit: '열기',
   },
 
+  ai: {
+    title: 'AI 와 대본 쓰기',
+    sub: 'Claude 나 Codex 가 열린 자료를 읽고 장별 메모(대본)를 같이 씁니다. 쓴 메모는 발표자 화면과 폰에 바로 보입니다. 이 컴퓨터 안에서만 연결됩니다.',
+    copy: '복사',
+    copied: '복사했습니다',
+    howClaudeCode: '터미널에 붙여 넣고, Claude Code 에서 /mcp__pointer__write_script 를 입력하면 시작합니다.',
+    howCodex: '터미널에 붙여 넣고, Codex 에게 "pointer 로 발표 대본 같이 쓰자" 라고 말하면 됩니다.',
+    howDesktop: 'Claude Desktop 의 설정 > 개발자 > 구성 편집에서 claude_desktop_config.json 에 붙여 넣고 Claude Desktop 을 다시 켜세요. Node.js 가 필요합니다.',
+  },
+
   convert: {
     converting: {
       powerpoint: 'PowerPoint 로 PDF 를 만드는 중입니다. 처음 한 번만 걸립니다.',
@@ -265,6 +275,16 @@ const en: Messages = {
     sub: (name: string) => `${name} needs a password to open.`,
     wrong: 'Wrong password.',
     submit: 'Open',
+  },
+
+  ai: {
+    title: 'Write your script with AI',
+    sub: 'Claude or Codex reads the open presentation and drafts notes for each slide. Notes show up right away on the presenter view and your phone. The connection stays on this computer.',
+    copy: 'Copy',
+    copied: 'Copied',
+    howClaudeCode: 'Paste this into a terminal, then type /mcp__pointer__write_script in Claude Code.',
+    howCodex: 'Paste this into a terminal, then ask Codex to "write a talk script with pointer".',
+    howDesktop: 'In Claude Desktop, open Settings > Developer > Edit Config, paste this into claude_desktop_config.json, and restart Claude Desktop. Requires Node.js.',
   },
 
   convert: {

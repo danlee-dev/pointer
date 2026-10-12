@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import type { Locale, Messages } from '@pointer/i18n';
 import type { ConnectionInfo, OpenResult, RecentItem } from '../../../shared/ipc';
+import { AiPanel } from './AiPanel';
 import { ConnectPanel } from './ConnectPanel';
 
 interface Props {
@@ -79,8 +80,13 @@ export function Home({ t, locale, conn, dragging, onResult }: Props) {
         </div>
       </section>
 
-      <aside className="home-side">
-        <ConnectPanel conn={conn} t={t} />
+      <aside className="home-aside">
+        <div className="home-side">
+          <ConnectPanel conn={conn} t={t} />
+        </div>
+        <div className="home-side">
+          <AiPanel t={t} />
+        </div>
       </aside>
     </main>
   );
