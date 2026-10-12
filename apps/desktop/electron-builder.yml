@@ -21,13 +21,15 @@ fileAssociations:
 
 mac:
   category: public.app-category.productivity
+  # Apple Silicon·Intel 둘 다 되는 파일 하나 (다운로드 버튼을 하나로)
   target:
     - target: dmg
-      arch: [arm64, x64]
+      arch: [universal]
   hardenedRuntime: true
   entitlements: resources/entitlements.mac.plist
   entitlementsInherit: resources/entitlements.mac.plist
-  # Developer ID 서명·공증은 배포 단계에서 켠다 (CSC_LINK, APPLE_ID 등 환경 변수)
+  # 공증은 출시용 빌드(pnpm release:mac)에서만 켠다. 자격 증명은 키체인 프로필(APPLE_KEYCHAIN_PROFILE)로,
+  # 코드·저장소에는 아무것도 넣지 않는다. 만드는 법: README "출시"
   notarize: false
   extendInfo:
     NSLocalNetworkUsageDescription: 같은 와이파이의 폰 리모컨과 연결하려면 로컬 네트워크 접근이 필요합니다.
@@ -37,6 +39,10 @@ mac:
     - from: native/bin/displays
       to: native/displays
 
+# 파일 이름에 버전을 넣지 않는다: 홈페이지가 releases/latest/download/<이름> 으로 늘 최신을 가리킨다
+dmg:
+  artifactName: ${productName}-mac.${ext}
+
 win:
   target:
     - nsis
@@ -44,6 +50,8 @@ win:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
+  # GitHub 릴리스는 파일 이름의 공백을 점으로 바꾸고, 홈페이지는 버전 없는 이름으로 최신을 가리킨다
+  artifactName: ${productName}-windows-setup.${ext}
 appx:
   # Microsoft Store 제출용 (MSIX). 스토어가 서명해 주므로 인증서가 필요 없다.
   displayName: pointer
