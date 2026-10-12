@@ -4,6 +4,8 @@
 넘기고 가리킨다. (이름은 임시)
 
 - 데스크톱 앱 (Electron): 발표자 보기 + 청중 화면, 레이저·스포트라이트·돋보기·판서, 타이머, 장별 메모
+- 여는 자료: PDF, 이미지 묶음, PowerPoint(pptx·ppt), Keynote(key). PowerPoint·Keynote 파일은 이 컴퓨터의
+  PowerPoint / Keynote / LibreOffice 로 PDF 를 만들어 연다 (처음 한 번만, 결과는 캐시). 발표자 노트는 장별 메모로 가져온다
 - 안드로이드: 설치 없이 QR 로 여는 웹 리모컨
 - iOS: 앱 (볼륨 버튼으로 넘기기) — 준비 중
 

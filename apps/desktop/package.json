@@ -18,7 +18,8 @@
   },
   "dependencies": {
     "qrcode": "^1.5.4",
-    "ws": "^8.22.0"
+    "ws": "^8.22.0",
+    "fflate": "^0.8.3"
   },
   "devDependencies": {
     "@pointer/design": "workspace:*",

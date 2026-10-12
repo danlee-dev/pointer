@@ -22,6 +22,7 @@ import {
   type ConnectionInfo,
   type DesktopCommand,
   type InkEvent,
+  type Notice,
   type OpenResult,
   type PointerFx,
   type RecentItem,
@@ -29,6 +30,7 @@ import {
   type WorkerLoadResult,
 } from '../shared/ipc';
 import { IMAGE_EXT, inspectPaths, type OpenedDeck } from './deck';
+import { convertPresentation, isPresentation, PRESENTATION_EXT } from './convert';
 import { lanAddresses } from './network';
 import { createRemoteServer } from './server';
 import { appendStroke, EMPTY_SESSION, reduce, type Ink, type Session, type SessionAction } from './session';
@@ -202,7 +204,32 @@ function askPassword(title: string, wrong: boolean): Promise<string | null> {
   });
 }
 
+function notice(n: Notice) {
+  if (live(mainWin)) mainWin.webContents.send(IPC.notice, n);
+}
+
+/**
+ * PowerPoint·Keynote 파일이면 PDF 로 바꿔서 연다. 원래 파일 이름을 제목으로, 원래 경로를 최근 목록에 남긴다.
+ * 노트는 자료가 열린 뒤 비어 있는 장에만 채운다 (사용자가 쓴 메모를 덮지 않는다).
+ */
 async function openPaths(paths: string[]): Promise<OpenResult> {
+  if (paths.some(isPresentation)) {
+    if (paths.length > 1) return { ok: false, reason: 'mixed' };
+    const src = paths[0]!;
+    const conv = await convertPresentation(src, (via) => notice({ kind: 'converting', via }));
+    if (!conv.ok) return { ok: false, reason: conv.reason };
+    const r = await openPaths([conv.pdf]);
+    if (!r.ok || !opened) return r;
+    const title = path.basename(src, path.extname(src));
+    opened.source.title = title;
+    opened.picked = [src];
+    if (session.deck) dispatch({ t: 'openDeck', deck: { ...session.deck, title } });
+    recent.replaceLatest([conv.pdf], { paths: [src], title });
+    const imported = importNotes(opened.source.id, conv.notes, session.deck?.pages.length ?? 0);
+    notice({ kind: 'converted', notes: imported });
+    return r;
+  }
+
   const deck = await inspectPaths(paths);
   if (typeof deck === 'string') return { ok: false, reason: deck };
 
@@ -234,6 +261,29 @@ async function openPaths(paths: string[]): Promise<OpenResult> {
   return { ok: true };
 }
 
+/**
+ * 창 밖에서 들어온 열기 (Finder "다음으로 열기", 아이콘에 끌어 놓기, 두 번째 실행).
+ * 창에서 연 경우와 달리 결과를 받을 곳이 없으니 실패를 알림으로 보낸다. 안 그러면 "변환 중" 표시가 남는다.
+ */
+async function openFromOutside(paths: string[]) {
+  const r = await openPaths(paths);
+  if (!r.ok) notice({ kind: 'openFailed', reason: r.reason });
+}
+
+/** 변환기가 준 노트를 비어 있는 장에만 넣는다. 장 수가 다르면 어긋날 수 있어 넣지 않는다 */
+function importNotes(deckId: string, list: string[] | null, pages: number): number {
+  if (!list || list.length !== pages) return 0;
+  let n = 0;
+  list.forEach((text, i) => {
+    if (text.trim() && !notes.get(deckId, i).trim()) {
+      notes.set(deckId, i, text);
+      n += 1;
+    }
+  });
+  if (n > 0) publishState();
+  return n;
+}
+
 function closeDeck() {
   stopPresenting();
   opened = null;
@@ -248,7 +298,12 @@ async function openDialog(): Promise<OpenResult> {
   const r = await dialog.showOpenDialog(mainWin, {
     title: t.home.open,
     properties: ['openFile', 'multiSelections'],
-    filters: [{ name: 'PDF, Images', extensions: ['pdf', ...IMAGE_EXT.map((e) => e.slice(1))] }],
+    filters: [
+      {
+        name: 'PDF, PowerPoint, Keynote, Images',
+        extensions: ['pdf', ...PRESENTATION_EXT.map((e) => e.slice(1)), ...IMAGE_EXT.map((e) => e.slice(1))],
+      },
+    ],
   });
   if (r.canceled || r.filePaths.length === 0) return { ok: false, reason: 'canceled' };
   return openPaths(r.filePaths);
@@ -273,7 +328,7 @@ async function startPresenting() {
     // 미러링 중이면 노트북에 발표자 화면을 따로 띄울 수 없다. 발표하는 동안만 확장 모드로 바꾼다.
     if (!windowedAudience) {
       mirrorSnapshot = await unmirrorForPresenting();
-      if (mirrorSnapshot && live(mainWin)) mainWin.webContents.send(IPC.notice, 'mirrorOff');
+      if (mirrorSnapshot) notice({ kind: 'mirrorOff' });
     }
 
     const twoScreens = screen.getAllDisplays().length > 1;
@@ -500,7 +555,9 @@ function registerAppProtocol() {
 }
 
 function filesFromArgv(argv: string[]): string[] {
-  return argv.slice(app.isPackaged ? 1 : 2).filter((a) => !a.startsWith('-') && /\.(pdf|png|jpe?g|webp|gif)$/i.test(a));
+  return argv
+    .slice(app.isPackaged ? 1 : 2)
+    .filter((a) => !a.startsWith('-') && (/\.(pdf|png|jpe?g|webp|gif)$/i.test(a) || isPresentation(a)));
 }
 
 app.on('web-contents-created', (_e, contents) => {
@@ -514,13 +571,13 @@ app.on('second-instance', (_e, argv) => {
     mainWin.focus();
   }
   const files = filesFromArgv(argv);
-  if (files.length) void openPaths(files);
+  if (files.length) void openFromOutside(files);
 });
 
 // 맥에서 PDF 를 앱 아이콘에 끌어 놓거나 "다음으로 열기" 했을 때
 app.on('open-file', (e, file) => {
   e.preventDefault();
-  if (app.isReady() && live(workerWin)) void openPaths([file]);
+  if (app.isReady() && live(workerWin)) void openFromOutside([file]);
   else pendingOpen = [file];
 });
 
@@ -560,7 +617,7 @@ app.whenReady().then(async () => {
 
   const initial = pendingOpen ?? filesFromArgv(process.argv);
   pendingOpen = null;
-  if (initial.length) void openPaths(initial);
+  if (initial.length) void openFromOutside(initial);
 });
 
 app.on('window-all-closed', () => app.quit());

@@ -52,7 +52,17 @@ export type InkEvent =
 
 export type OpenResult =
   | { ok: true }
-  | { ok: false; reason: 'mixed' | 'unsupported' | 'noImages' | 'open' | 'canceled' };
+  | {
+      ok: false;
+      reason: 'mixed' | 'unsupported' | 'noImages' | 'open' | 'canceled' | 'noConverter' | 'convertFailed' | 'convertTimeout';
+    };
+
+/** 화면 아래에 잠깐 띄우는 알림 */
+export type Notice =
+  | { kind: 'mirrorOff' }
+  | { kind: 'converting'; via: 'powerpoint' | 'keynote' | 'libreoffice' }
+  | { kind: 'converted'; notes: number }
+  | { kind: 'openFailed'; reason: Exclude<OpenResult, { ok: true }>['reason'] };
 
 /** 데스크톱 화면에서 보내는 명령. 폰 메시지와 같은 모양 (hello/ping 제외) */
 export type DesktopCommand = Exclude<ClientMessage, { t: 'hello' } | { t: 'ping' }>;
@@ -105,7 +115,7 @@ export interface DesktopApi {
   onFullscreen(cb: (on: boolean) => void): () => void;
   getDisplays(): Promise<number>;
   onDisplays(cb: (count: number) => void): () => void;
-  onNotice(cb: (notice: 'mirrorOff') => void): () => void;
+  onNotice(cb: (notice: Notice) => void): () => void;
   onPointer(cb: (p: PointerFx) => void): () => void;
   onInk(cb: (e: InkEvent) => void): () => void;
   getInk(): Promise<Stroke[]>;
