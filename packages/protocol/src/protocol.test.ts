@@ -8,6 +8,7 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'nav', dir: 1 })).toEqual({ t: 'nav', dir: 1 });
     expect(parse({ t: 'pointer', tool: 'laser', on: true, x: 0.5, y: 1 })).toMatchObject({ x: 0.5 });
     expect(parse({ t: 'stroke', id: 'a', color: 'red', pts: [0, 0, 1, 1], end: false })).not.toBeNull();
+    expect(parse({ t: 'cue', cue: 'drumroll', on: true })).toEqual({ t: 'cue', cue: 'drumroll', on: true });
   });
 
   it('모양이 틀리면 버린다', () => {
@@ -20,6 +21,8 @@ describe('parseClientMessage', () => {
     expect(parse({ t: 'stroke', id: 'a', color: 'red', pts: [0, 0, 1], end: false })).toBeNull();
     expect(parse({ t: 'stroke', id: 'a', color: 'pink', pts: [], end: false })).toBeNull();
     expect(parse({ t: 'timerTarget', ms: -5 })).toBeNull();
+    expect(parse({ t: 'cue', cue: 'airhorn', on: true })).toBeNull();
+    expect(parse({ t: 'cue', cue: 'confetti' })).toBeNull();
     expect(parse({ t: 'hello', v: 1, device: { id: '', name: 'x', platform: 'web' } })).toBeNull();
     expect(parse({ t: 'unknown' })).toBeNull();
     expect(parse([1, 2])).toBeNull();

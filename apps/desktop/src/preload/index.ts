@@ -42,6 +42,7 @@ const api: DesktopApi = {
   onNotice: (cb) => listen(IPC.notice, cb),
   onPointer: (cb) => listen(IPC.pointer, cb),
   onInk: (cb) => listen(IPC.ink, cb),
+  onCue: (cb) => listen(IPC.cue, cb),
   getInk: () => ipcRenderer.invoke(IPC.getInk),
 
   getConnection: () => ipcRenderer.invoke(IPC.getConnection),
@@ -58,7 +59,12 @@ const api: DesktopApi = {
     loaded: (r) => ipcRenderer.send(IPC.workerLoaded, r),
     onThumbRequest: (cb) => listen(IPC.workerThumbRequest, cb),
     thumbDone: (deckId, index, jpeg) => ipcRenderer.send(IPC.workerThumbDone, deckId, index, jpeg),
+    onTextRequest: (cb) => listen(IPC.workerTextRequest, cb),
+    textDone: (reqId, text) => ipcRenderer.send(IPC.workerTextDone, reqId, text),
   },
+
+  getAiConnection: () => ipcRenderer.invoke(IPC.getAiConnection),
+  copyText: (text) => ipcRenderer.send(IPC.copyText, text),
 };
 
 contextBridge.exposeInMainWorld('pointer', api);

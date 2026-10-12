@@ -1,10 +1,11 @@
-// 아래에서 올라오는 시트들: 장 이동, 타이머, 더보기.
+// 아래에서 올라오는 시트들: 장 이동, 타이머, 효과, 더보기.
 // 모양은 모두 같다 - 제목, 한 줄 설명, 오른쪽 위 닫기.
 
 import type { ReactNode } from 'react';
-import { formatClock, timerElapsed, type Blank, type TimerState } from '@pointer/protocol';
+import { useRef, useState } from 'react';
+import { formatClock, timerElapsed, type Blank, type Cue, type TimerState } from '@pointer/protocol';
 import type { Messages } from '@pointer/i18n';
-import { CheckIcon, CloseIcon } from './icons';
+import { CheckIcon, CloseIcon, CUE_ICONS } from './icons';
 
 export function Sheet({ title, sub, onClose, children, t }: { title: string; sub?: string; onClose: () => void; children: ReactNode; t: Messages }) {
   return (
@@ -150,6 +151,56 @@ export function MoreSheet(props: {
         )}
       </ul>
       {latency !== null && <p className="subtle small latency num">{t.remote.ms(latency)}</p>}
+    </Sheet>
+  );
+}
+
+// ---------- 효과 ----------
+// 누르는 순간 on, 떼는 순간 off. 두구두구는 가장 자주 쓰고 오래 누르는 효과라 맨 위에 크게 둔다.
+
+const CUE_GRID: Cue[] = ['confetti', 'applause', 'fireworks', 'micdrop', 'correct', 'wrong'];
+
+function CuePad({ cue, wide, onCue, t }: { cue: Cue; wide?: boolean; onCue: (cue: Cue, on: boolean) => void; t: Messages }) {
+  const [held, setHeld] = useState(false);
+  const pointer = useRef<number | null>(null);
+  const Icon = CUE_ICONS[cue];
+  const up = () => {
+    if (pointer.current === null) return;
+    pointer.current = null;
+    setHeld(false);
+    onCue(cue, false);
+  };
+  return (
+    <button
+      className={`cue-pad${wide ? ' wide' : ''}${held ? ' held' : ''}`}
+      onPointerDown={(e) => {
+        if (pointer.current !== null) return;
+        pointer.current = e.pointerId;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        setHeld(true);
+        onCue(cue, true);
+      }}
+      onPointerUp={up}
+      onPointerCancel={up}
+      onLostPointerCapture={up}
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      <Icon />
+      <span>{t.cue.name[cue]}</span>
+      {held && <i className="live-dot" aria-hidden />}
+    </button>
+  );
+}
+
+export function CueSheet({ onCue, onClose, t }: { onCue: (cue: Cue, on: boolean) => void; onClose: () => void; t: Messages }) {
+  return (
+    <Sheet title={t.cue.title} sub={t.cue.sub} onClose={onClose} t={t}>
+      <div className="cue-grid">
+        <CuePad cue="drumroll" wide onCue={onCue} t={t} />
+        {CUE_GRID.map((c) => (
+          <CuePad key={c} cue={c} onCue={onCue} t={t} />
+        ))}
+      </div>
     </Sheet>
   );
 }

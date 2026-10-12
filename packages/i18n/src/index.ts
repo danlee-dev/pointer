@@ -12,12 +12,29 @@ const ko = {
     spotlight: '스포트라이트',
     magnify: '돋보기',
     pen: '펜',
+    air: '에어',
   },
   toolHint: {
     laser: '슬라이드를 누른 채 움직이면 레이저가 나갑니다',
     spotlight: '누른 곳 주변만 밝게 비춥니다',
     magnify: '누른 곳을 크게 보여 줍니다',
     pen: '손가락으로 그리면 화면에 그려집니다. 장을 넘기면 지워집니다',
+    air: '슬라이드를 누른 채 폰을 기울이면 레이저가 따라 움직입니다',
+  },
+
+  // ---------- 효과 (청중 화면 연출) ----------
+  cue: {
+    title: '효과',
+    sub: '꾹 누르고 있으면 계속 이어지고, 떼면 마무리됩니다. 소리는 컴퓨터에서 납니다.',
+    name: {
+      confetti: '꽃가루',
+      drumroll: '두구두구',
+      applause: '박수',
+      fireworks: '불꽃놀이',
+      micdrop: '마이크 드롭',
+      correct: '딩동댕',
+      wrong: '땡',
+    },
   },
 
   // ---------- 폰 리모컨 ----------
@@ -49,6 +66,24 @@ const ko = {
     ms: (n: number) => `${n}ms`,
   },
 
+  // ---------- iOS 앱 ----------
+  app: {
+    connectTitle: '컴퓨터와 연결',
+    connectSub: '컴퓨터의 pointer 앱에 뜬 QR 코드를 비추세요. 폰과 컴퓨터가 같은 와이파이에 있어야 합니다.',
+    allowCamera: '카메라 허용',
+    cameraDenied: '카메라를 쓸 수 없습니다. 설정에서 허용하거나 주소를 직접 입력하세요.',
+    enterAddress: '주소 직접 입력',
+    addressPlaceholder: 'http://192.168.0.12:4747/?k=...',
+    connect: '연결',
+    invalidAddress: 'pointer 앱의 연결 주소가 아닙니다. QR 아래에 있는 주소를 그대로 넣어 주세요.',
+    changeComputer: '다른 컴퓨터에 연결',
+    volumeButtons: '볼륨 버튼으로 넘기기',
+    volumeButtonsSub: '볼륨 올리기는 다음, 내리기는 이전. 켜 두는 동안 폰 소리 크기는 중간으로 고정됩니다.',
+    volumeTip: '볼륨 버튼으로도 넘길 수 있습니다',
+    enable: '켜기',
+    later: '나중에',
+  },
+
   // ---------- 타이머 ----------
   timer: {
     title: '타이머',
@@ -67,7 +102,7 @@ const ko = {
   // ---------- 데스크톱 홈 ----------
   home: {
     dropTitle: '발표 자료를 여기로 끌어 놓으세요',
-    dropSub: 'PDF, 또는 이미지 여러 장 (PNG, JPG, WebP, GIF)',
+    dropSub: 'PDF, PowerPoint, Keynote, 또는 이미지 여러 장',
     open: '파일 열기',
     recent: '최근 자료',
     recentEmpty: '열었던 자료가 여기에 쌓입니다.',
@@ -100,6 +135,7 @@ const ko = {
     notesPlaceholder: '이 장에서 할 말을 적어 두세요. 폰 리모컨에도 보입니다.',
     blanked: { black: '청중 화면 가림 (검정)', white: '청중 화면 가림 (흰색)' },
     keys: '방향키·PageUp/Down 넘기기, B 검은 화면, W 흰 화면, F 전체화면, Esc 발표 끝내기',
+    cueKeys: '효과는 누르고 있는 동안 이어집니다: C 꽃가루, D 두구두구, A 박수, R 불꽃놀이, M 마이크 드롭, O 딩동댕, X 땡',
     presenting: '청중 화면에 나가는 중',
     swap: '화면 바꾸기',
     fullscreen: '전체화면',
@@ -118,10 +154,32 @@ const ko = {
     submit: '열기',
   },
 
+  ai: {
+    title: 'AI 와 대본 쓰기',
+    sub: 'Claude 나 Codex 가 열린 자료를 읽고 장별 메모(대본)를 같이 씁니다. 쓴 메모는 발표자 화면과 폰에 바로 보입니다. 이 컴퓨터 안에서만 연결됩니다.',
+    copy: '복사',
+    copied: '복사했습니다',
+    howClaudeCode: '터미널에 붙여 넣고, Claude Code 에서 /mcp__pointer__write_script 를 입력하면 시작합니다.',
+    howCodex: '터미널에 붙여 넣고, Codex 에게 "pointer 로 발표 대본 같이 쓰자" 라고 말하면 됩니다.',
+    howDesktop: 'Claude Desktop 의 설정 > 개발자 > 구성 편집에서 claude_desktop_config.json 에 붙여 넣고 Claude Desktop 을 다시 켜세요. Node.js 가 필요합니다.',
+  },
+
+  convert: {
+    converting: {
+      powerpoint: 'PowerPoint 로 PDF 를 만드는 중입니다. 처음 한 번만 걸립니다.',
+      keynote: 'Keynote 로 PDF 를 만드는 중입니다. 처음 한 번만 걸립니다.',
+      libreoffice: 'LibreOffice 로 PDF 를 만드는 중입니다. 처음 한 번만 걸립니다.',
+    },
+    notesImported: (n: number) => `발표자 노트 ${n}장을 메모로 가져왔습니다.`,
+  },
+
   error: {
     open: '이 파일을 열 수 없습니다',
-    mixed: 'PDF 와 이미지는 따로 열어 주세요. PDF 는 한 번에 하나만 열 수 있습니다.',
-    unsupported: '지원하지 않는 형식입니다. PDF 나 이미지(PNG, JPG, WebP, GIF)를 열어 주세요.',
+    noConverter: 'PowerPoint, Keynote, LibreOffice 중 하나가 있어야 이 파일을 열 수 있습니다. 발표 앱에서 PDF 로 내보내서 열어도 됩니다.',
+    convertFailed: 'PDF 로 바꾸지 못했습니다. 발표 앱에서 PDF 로 내보낸 뒤 열어 주세요.',
+    convertTimeout: '변환이 너무 오래 걸려서 멈췄습니다. 발표 앱에 대화상자가 떠 있는지 확인해 주세요.',
+    mixed: 'PDF·발표 파일은 한 번에 하나만, 이미지와 섞지 말고 열어 주세요.',
+    unsupported: '지원하지 않는 형식입니다. PDF, PowerPoint, Keynote, 이미지(PNG, JPG, WebP, GIF)를 열어 주세요.',
     noImages: '이 폴더에 이미지가 없습니다.',
   },
 
@@ -153,12 +211,28 @@ const en: Messages = {
     spotlight: 'Spotlight',
     magnify: 'Zoom',
     pen: 'Pen',
+    air: 'Air',
   },
   toolHint: {
     laser: 'Touch and drag on the slide to point',
     spotlight: 'Lights up only the area you touch',
     magnify: 'Magnifies the area you touch',
     pen: 'Draw with your finger. Ink clears when the slide changes',
+    air: 'Hold the slide and tilt your phone to move the laser',
+  },
+
+  cue: {
+    title: 'Effects',
+    sub: 'Hold to keep it going, let go to finish. Sound plays from the computer.',
+    name: {
+      confetti: 'Confetti',
+      drumroll: 'Drumroll',
+      applause: 'Applause',
+      fireworks: 'Fireworks',
+      micdrop: 'Mic drop',
+      correct: 'Correct',
+      wrong: 'Wrong',
+    },
   },
 
   remote: {
@@ -189,6 +263,23 @@ const en: Messages = {
     ms: (n: number) => `${n} ms`,
   },
 
+  app: {
+    connectTitle: 'Connect to your computer',
+    connectSub: 'Point the camera at the QR code in the pointer app on your computer. Your phone and computer need to be on the same Wi-Fi.',
+    allowCamera: 'Allow camera',
+    cameraDenied: "Can't use the camera. Allow it in Settings or enter the address yourself.",
+    enterAddress: 'Enter address',
+    addressPlaceholder: 'http://192.168.0.12:4747/?k=...',
+    connect: 'Connect',
+    invalidAddress: "That isn't a pointer address. Copy the address shown under the QR code.",
+    changeComputer: 'Connect to another computer',
+    volumeButtons: 'Volume buttons change slides',
+    volumeButtonsSub: 'Volume up goes forward, down goes back. While on, your phone volume stays at the middle.',
+    volumeTip: 'You can also use the volume buttons',
+    enable: 'Turn on',
+    later: 'Later',
+  },
+
   timer: {
     title: 'Timer',
     sub: 'Starts on your first slide change. Set a goal and your phone vibrates at 5 minutes left, 1 minute left, and time up.',
@@ -205,7 +296,7 @@ const en: Messages = {
 
   home: {
     dropTitle: 'Drop a presentation here',
-    dropSub: 'A PDF, or a set of images (PNG, JPG, WebP, GIF)',
+    dropSub: 'A PDF, PowerPoint or Keynote file, or a set of images',
     open: 'Open file',
     recent: 'Recent',
     recentEmpty: 'Files you open will show up here.',
@@ -237,6 +328,7 @@ const en: Messages = {
     notesPlaceholder: 'What to say on this slide. Also shown on your phone.',
     blanked: { black: 'Audience screen hidden (black)', white: 'Audience screen hidden (white)' },
     keys: 'Arrow keys or PageUp/Down to move, B black, W white, F full screen, Esc to end',
+    cueKeys: 'Effects last while you hold the key: C confetti, D drumroll, A applause, R fireworks, M mic drop, O correct, X wrong',
     presenting: 'Showing on the audience screen',
     swap: 'Swap displays',
     fullscreen: 'Full screen',
@@ -255,10 +347,32 @@ const en: Messages = {
     submit: 'Open',
   },
 
+  ai: {
+    title: 'Write your script with AI',
+    sub: 'Claude or Codex reads the open presentation and drafts notes for each slide. Notes show up right away on the presenter view and your phone. The connection stays on this computer.',
+    copy: 'Copy',
+    copied: 'Copied',
+    howClaudeCode: 'Paste this into a terminal, then type /mcp__pointer__write_script in Claude Code.',
+    howCodex: 'Paste this into a terminal, then ask Codex to "write a talk script with pointer".',
+    howDesktop: 'In Claude Desktop, open Settings > Developer > Edit Config, paste this into claude_desktop_config.json, and restart Claude Desktop. Requires Node.js.',
+  },
+
+  convert: {
+    converting: {
+      powerpoint: 'Making a PDF with PowerPoint. This only happens the first time.',
+      keynote: 'Making a PDF with Keynote. This only happens the first time.',
+      libreoffice: 'Making a PDF with LibreOffice. This only happens the first time.',
+    },
+    notesImported: (n: number) => (n === 1 ? 'Imported speaker notes for 1 slide.' : `Imported speaker notes for ${n} slides.`),
+  },
+
   error: {
     open: "Couldn't open this file",
-    mixed: 'Open PDFs and images separately. Only one PDF can be open at a time.',
-    unsupported: 'Unsupported format. Open a PDF or images (PNG, JPG, WebP, GIF).',
+    noConverter: 'Opening this file needs PowerPoint, Keynote or LibreOffice. You can also export it to PDF and open that.',
+    convertFailed: "Couldn't convert it to PDF. Export it to PDF from your presentation app and open that.",
+    convertTimeout: 'Conversion took too long and was stopped. Check whether your presentation app is showing a dialog.',
+    mixed: 'Open one PDF or presentation at a time, and keep images separate.',
+    unsupported: 'Unsupported format. Open a PDF, PowerPoint or Keynote file, or images (PNG, JPG, WebP, GIF).',
     noImages: 'There are no images in this folder.',
   },
 

@@ -20,6 +20,8 @@ export interface LoadedDeck {
   pages: PageSize[];
   /** index 장을 가로 width 픽셀로 그린 그림. 같은 요청은 캐시에서 준다 */
   bitmap(index: number, width: number): Promise<ImageBitmap>;
+  /** 장에 들어 있는 글자 (AI 가 대본을 쓸 때 읽는다). 이미지 자료는 빈 문자열 */
+  text(index: number): Promise<string>;
   destroy(): void;
 }
 
@@ -133,6 +135,17 @@ async function loadPdf(source: DeckSource, password: string | null, knownPages?:
           return bmp;
         });
       },
+      async text(index) {
+        const page = await doc.getPage(index + 1);
+        const content = await page.getTextContent();
+        let out = '';
+        for (const item of content.items) {
+          if (!('str' in item)) continue;
+          out += item.str;
+          out += item.hasEOL ? '\n' : '';
+        }
+        return out.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+      },
       destroy() {
         cache.clear();
         // v6 부터 문서 정리는 loading task 쪽에서 한다
@@ -182,6 +195,7 @@ async function loadImages(source: DeckSource, knownPages?: PageSize[]): Promise<
           }),
         );
       },
+      text: async () => '',
       destroy() {
         cache.clear();
       },

@@ -1,6 +1,6 @@
 // main <-> renderer IPC 계약. preload 가 이 모양 그대로 window.pointer 로 노출한다.
 
-import type { ClientMessage, DeviceInfo, PageSize, PenColor, PresentationState, Tool } from '@pointer/protocol';
+import type { ClientMessage, Cue, DeviceInfo, PageSize, PenColor, PresentationState, Tool } from '@pointer/protocol';
 import type { Locale } from '@pointer/i18n';
 
 /** 렌더러가 자료를 그릴 때 필요한 정보. 파일 내용은 readFile 로 따로 받는다 */
@@ -46,13 +46,30 @@ export interface Stroke {
   pts: number[];
 }
 
+/** 효과 누름/뗌. audio 는 소리를 낼 창 하나만 true (청중 창이 있으면 그쪽) */
+export interface CueEvent {
+  cue: Cue;
+  on: boolean;
+  audio: boolean;
+}
+
 export type InkEvent =
   | { type: 'append'; id: string; color: PenColor; pts: number[] }
   | { type: 'clear' };
 
 export type OpenResult =
   | { ok: true }
-  | { ok: false; reason: 'mixed' | 'unsupported' | 'noImages' | 'open' | 'canceled' };
+  | {
+      ok: false;
+      reason: 'mixed' | 'unsupported' | 'noImages' | 'open' | 'canceled' | 'noConverter' | 'convertFailed' | 'convertTimeout';
+    };
+
+/** 화면 아래에 잠깐 띄우는 알림 */
+export type Notice =
+  | { kind: 'mirrorOff' }
+  | { kind: 'converting'; via: 'powerpoint' | 'keynote' | 'libreoffice' }
+  | { kind: 'converted'; notes: number }
+  | { kind: 'openFailed'; reason: Exclude<OpenResult, { ok: true }>['reason'] };
 
 /** 데스크톱 화면에서 보내는 명령. 폰 메시지와 같은 모양 (hello/ping 제외) */
 export type DesktopCommand = Exclude<ClientMessage, { t: 'hello' } | { t: 'ping' }>;
@@ -70,6 +87,17 @@ export type WorkerLoadResult =
 export interface ThumbRequest {
   deckId: string;
   index: number;
+}
+
+export interface TextRequest {
+  reqId: number;
+  deckId: string;
+  index: number;
+}
+
+/** AI(MCP) 연결 주소. 이 컴퓨터 안에서만 열린다 */
+export interface AiConnection {
+  url: string | null;
 }
 
 export interface DesktopApi {
@@ -105,9 +133,10 @@ export interface DesktopApi {
   onFullscreen(cb: (on: boolean) => void): () => void;
   getDisplays(): Promise<number>;
   onDisplays(cb: (count: number) => void): () => void;
-  onNotice(cb: (notice: 'mirrorOff') => void): () => void;
+  onNotice(cb: (notice: Notice) => void): () => void;
   onPointer(cb: (p: PointerFx) => void): () => void;
   onInk(cb: (e: InkEvent) => void): () => void;
+  onCue(cb: (e: CueEvent) => void): () => void;
   getInk(): Promise<Stroke[]>;
 
   // 연결
@@ -127,7 +156,13 @@ export interface DesktopApi {
     loaded(r: WorkerLoadResult): void;
     onThumbRequest(cb: (r: ThumbRequest) => void): () => void;
     thumbDone(deckId: string, index: number, jpeg: Uint8Array | null): void;
+    onTextRequest(cb: (r: TextRequest) => void): () => void;
+    textDone(reqId: number, text: string | null): void;
   };
+
+  // AI 대본 (MCP)
+  getAiConnection(): Promise<AiConnection>;
+  copyText(text: string): void;
 }
 
 export const IPC = {
@@ -157,6 +192,7 @@ export const IPC = {
   notice: 'app:notice',
   pointer: 'fx:pointer',
   ink: 'fx:ink',
+  cue: 'fx:cue',
   getInk: 'fx:getInk',
   getConnection: 'conn:get',
   connection: 'conn:changed',
@@ -169,4 +205,8 @@ export const IPC = {
   workerLoaded: 'worker:loaded',
   workerThumbRequest: 'worker:thumbRequest',
   workerThumbDone: 'worker:thumbDone',
+  workerTextRequest: 'worker:textRequest',
+  workerTextDone: 'worker:textDone',
+  getAiConnection: 'ai:getConnection',
+  copyText: 'app:copyText',
 } as const;

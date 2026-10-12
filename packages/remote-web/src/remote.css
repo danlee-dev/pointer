@@ -289,6 +289,36 @@ img { -webkit-user-drag: none; -webkit-touch-callout: none; }
 .choice.strong { font-weight: 600; color: var(--accent-text); }
 .latency { margin-top: 16px; }
 
+/* ---------- 효과 ---------- */
+.bar-actions { display: flex; gap: 8px; }
+.cue-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-bottom: 4px; }
+.cue-pad {
+  position: relative;
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 14px;
+  font-weight: 600;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: transform 0.15s var(--ease-out), background-color 0.15s var(--ease-out);
+}
+.cue-pad svg { width: 28px; height: 28px; color: var(--fg-muted); }
+.cue-pad.wide { grid-column: 1 / -1; min-height: 120px; flex-direction: row; gap: 12px; font-size: 20px; font-weight: 300; letter-spacing: var(--tracking-title); }
+.cue-pad.wide svg { width: 36px; height: 36px; }
+.cue-pad.held { transform: scale(0.96); background: var(--surface-press); }
+.cue-pad.held svg { color: var(--fg); }
+.live-dot { position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--laser); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: 0.35; } }
+
 @keyframes fade { from { opacity: 0; } }
 @keyframes rise { from { transform: translateY(32px); opacity: 0.5; } }
 

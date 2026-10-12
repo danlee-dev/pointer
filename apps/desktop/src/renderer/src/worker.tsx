@@ -68,3 +68,16 @@ window.pointer.worker.onThumbRequest(({ deckId, index }) => {
   queue = [index, ...queue.filter((i) => i !== index)];
   void pump();
 });
+
+// AI 가 장 글자를 달라고 하면 (MCP read_slides)
+window.pointer.worker.onTextRequest(async ({ reqId, deckId, index }) => {
+  if (!deck || deck.id !== deckId || index >= deck.pages.length) {
+    window.pointer.worker.textDone(reqId, null);
+    return;
+  }
+  try {
+    window.pointer.worker.textDone(reqId, await deck.text(index));
+  } catch {
+    window.pointer.worker.textDone(reqId, null);
+  }
+});

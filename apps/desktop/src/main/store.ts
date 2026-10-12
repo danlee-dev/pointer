@@ -63,6 +63,15 @@ export const recent = {
     const rest = recent.list().filter((e) => !sameEntry(e.paths, entry.paths));
     writeJson('recent.json', [entry, ...rest].slice(0, MAX_RECENT));
   },
+  /** 변환해서 연 자료: 목록에는 변환된 PDF 대신 원래 파일을 남긴다 */
+  replaceLatest(paths: string[], patch: Pick<RecentEntry, 'paths' | 'title'>) {
+    const list = recent.list();
+    const i = list.findIndex((e) => sameEntry(e.paths, paths));
+    if (i < 0) return;
+    const entry = { ...list[i]!, ...patch };
+    const rest = list.filter((e, j) => j !== i && !sameEntry(e.paths, patch.paths));
+    writeJson('recent.json', [entry, ...rest].slice(0, MAX_RECENT));
+  },
   remove(paths: string[]) {
     writeJson('recent.json', recent.list().filter((e) => !sameEntry(e.paths, paths)));
   },
@@ -97,6 +106,19 @@ export const token = {
   rotate(): string {
     const t = randomBytes(8).toString('hex');
     writeJson('pairing.json', { token: t });
+    return t;
+  },
+};
+
+// ---------- AI(MCP) 토큰 ----------
+// 폰 연결 토큰과 따로 둔다. 폰 QR 을 새로 만들어도 AI 설정은 그대로 둔다.
+
+export const aiToken = {
+  get(): string {
+    const saved = readJson<{ token?: string }>('ai.json', {}).token;
+    if (saved && /^[a-f0-9]{24,}$/.test(saved)) return saved;
+    const t = randomBytes(16).toString('hex');
+    writeJson('ai.json', { token: t });
     return t;
   },
 };

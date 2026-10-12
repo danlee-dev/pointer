@@ -4,6 +4,7 @@
 import {
   app,
   BrowserWindow,
+  clipboard,
   dialog,
   ipcMain,
   Menu,
@@ -15,13 +16,16 @@ import {
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { toString as qrToString } from 'qrcode';
-import { DEFAULT_PORT, pairingUrl, type PresentationState } from '@pointer/protocol';
+import { DEFAULT_PORT, pairingUrl, type Cue, type PresentationState } from '@pointer/protocol';
 import { messages, resolveLocale, type Locale } from '@pointer/i18n';
 import {
   IPC,
+  type AiConnection,
   type ConnectionInfo,
   type DesktopCommand,
+  type CueEvent,
   type InkEvent,
+  type Notice,
   type OpenResult,
   type PointerFx,
   type RecentItem,
@@ -29,10 +33,12 @@ import {
   type WorkerLoadResult,
 } from '../shared/ipc';
 import { IMAGE_EXT, inspectPaths, type OpenedDeck } from './deck';
+import { convertPresentation, isPresentation, PRESENTATION_EXT } from './convert';
 import { lanAddresses } from './network';
 import { createRemoteServer } from './server';
 import { appendStroke, EMPTY_SESSION, reduce, type Ink, type Session, type SessionAction } from './session';
-import { notes, recent, settings, token } from './store';
+import { aiToken, notes, recent, settings, token } from './store';
+import { createMcpServer, DEFAULT_MCP_PORT } from './mcp';
 import { createThumbCache } from './thumbs';
 import { restoreMirror, restoreMirrorSync, unmirrorForPresenting, type MirrorSnapshot } from './displayMode';
 import {
@@ -129,9 +135,36 @@ function handleCommand(c: DesktopCommand) {
     case 'clearInk':
       clearInk();
       return;
+    case 'cue':
+      cue(c.cue, c.on);
+      return;
     default:
       dispatch(c);
   }
+}
+
+// ---------- 효과 ----------
+// 누르고 있는 효과는 떼는 신호가 와야 끝난다. 폰이 끊기거나 신호를 놓쳐도
+// 화면에서 두구두구가 영원히 울리지 않게 20초 뒤엔 저절로 마무리한다.
+
+const MAX_CUE_HOLD_MS = 20_000;
+const heldCues = new Map<Cue, ReturnType<typeof setTimeout>>();
+
+function cue(name: Cue, on: boolean) {
+  const held = heldCues.get(name);
+  if (held) clearTimeout(held);
+  heldCues.delete(name);
+  if (on) heldCues.set(name, setTimeout(() => cue(name, false), MAX_CUE_HOLD_MS));
+  else if (!held) return; // 이미 마무리된 효과
+  // 소리는 한 창에서만 낸다. 청중 창이 있으면 거기 (프로젝터·TV 스피커로 나가게)
+  const audioWin = live(audienceWin) ? audienceWin : mainWin;
+  for (const w of [mainWin, audienceWin]) {
+    if (live(w)) w.webContents.send(IPC.cue, { cue: name, on, audio: w === audioWin } satisfies CueEvent);
+  }
+}
+
+function releaseCues() {
+  for (const name of [...heldCues.keys()]) cue(name, false);
 }
 
 // ---------- 폰 서버 ----------
@@ -154,9 +187,54 @@ const server = createRemoteServer({
     if (msg.t !== 'hello' && msg.t !== 'ping') handleCommand(msg);
   },
   onDevicesChanged: () => void publishConnection(),
-  // 손가락을 댄 채로 폰이 잠기면 레이저가 화면에 남는다
-  onDeviceGone: () => toWindows(IPC.pointer, { tool: 'laser', on: false, x: 0, y: 0 } satisfies PointerFx),
+  // 손가락을 댄 채로 폰이 잠기면 레이저가 화면에 남는다. 누르고 있던 효과도 마무리한다.
+  onDeviceGone: () => {
+    toWindows(IPC.pointer, { tool: 'laser', on: false, x: 0, y: 0 } satisfies PointerFx);
+    releaseCues();
+  },
 });
+
+// ---------- AI (MCP) ----------
+
+let mcpPort = DEFAULT_MCP_PORT;
+let textSeq = 0;
+const pendingText = new Map<number, (t: string | null) => void>();
+
+/** 장 글자는 pdf.js 가 있는 숨은 렌더 창에서 꺼낸다 */
+function slideText(index: number): Promise<string | null> {
+  const deckId = session.deck?.id;
+  if (!deckId || !live(workerWin)) return Promise.resolve(null);
+  const reqId = ++textSeq;
+  return new Promise((resolve) => {
+    pendingText.set(reqId, resolve);
+    workerWin?.webContents.send(IPC.workerTextRequest, { reqId, deckId, index });
+    setTimeout(() => {
+      if (pendingText.delete(reqId)) resolve(null);
+    }, 15_000);
+  });
+}
+
+/** 메모를 쓰고, 지금 보고 있는 장이면 발표자 화면·폰에 바로 보낸다 */
+function writeNotes(index: number, text: string) {
+  if (!session.deck) return;
+  notes.set(session.deck.id, index, text);
+  if (index === session.index) publishState();
+}
+
+const mcp = createMcpServer({
+  getToken: () => aiToken.get(),
+  info: () =>
+    session.deck
+      ? { title: session.deck.title, slides: session.deck.pages.length, current: session.index, presenting: session.presenting }
+      : null,
+  getText: slideText,
+  getImage: (index) => (session.deck ? thumbs.get(session.deck.id, index) : Promise.resolve(null)),
+  getNotes: (index) => (session.deck ? notes.get(session.deck.id, index) : ''),
+  setNotes: writeNotes,
+  goTo: (index) => dispatch({ t: 'goto', index }),
+});
+
+const aiConnection = (): AiConnection => ({ url: `http://127.0.0.1:${mcpPort}/mcp?k=${aiToken.get()}` });
 
 async function connectionInfo(): Promise<ConnectionInfo> {
   const chosen = settings.get().address;
@@ -202,7 +280,32 @@ function askPassword(title: string, wrong: boolean): Promise<string | null> {
   });
 }
 
+function notice(n: Notice) {
+  if (live(mainWin)) mainWin.webContents.send(IPC.notice, n);
+}
+
+/**
+ * PowerPoint·Keynote 파일이면 PDF 로 바꿔서 연다. 원래 파일 이름을 제목으로, 원래 경로를 최근 목록에 남긴다.
+ * 노트는 자료가 열린 뒤 비어 있는 장에만 채운다 (사용자가 쓴 메모를 덮지 않는다).
+ */
 async function openPaths(paths: string[]): Promise<OpenResult> {
+  if (paths.some(isPresentation)) {
+    if (paths.length > 1) return { ok: false, reason: 'mixed' };
+    const src = paths[0]!;
+    const conv = await convertPresentation(src, (via) => notice({ kind: 'converting', via }));
+    if (!conv.ok) return { ok: false, reason: conv.reason };
+    const r = await openPaths([conv.pdf]);
+    if (!r.ok || !opened) return r;
+    const title = path.basename(src, path.extname(src));
+    opened.source.title = title;
+    opened.picked = [src];
+    if (session.deck) dispatch({ t: 'openDeck', deck: { ...session.deck, title } });
+    recent.replaceLatest([conv.pdf], { paths: [src], title });
+    const imported = importNotes(opened.source.id, conv.notes, session.deck?.pages.length ?? 0);
+    notice({ kind: 'converted', notes: imported });
+    return r;
+  }
+
   const deck = await inspectPaths(paths);
   if (typeof deck === 'string') return { ok: false, reason: deck };
 
@@ -234,6 +337,29 @@ async function openPaths(paths: string[]): Promise<OpenResult> {
   return { ok: true };
 }
 
+/**
+ * 창 밖에서 들어온 열기 (Finder "다음으로 열기", 아이콘에 끌어 놓기, 두 번째 실행).
+ * 창에서 연 경우와 달리 결과를 받을 곳이 없으니 실패를 알림으로 보낸다. 안 그러면 "변환 중" 표시가 남는다.
+ */
+async function openFromOutside(paths: string[]) {
+  const r = await openPaths(paths);
+  if (!r.ok) notice({ kind: 'openFailed', reason: r.reason });
+}
+
+/** 변환기가 준 노트를 비어 있는 장에만 넣는다. 장 수가 다르면 어긋날 수 있어 넣지 않는다 */
+function importNotes(deckId: string, list: string[] | null, pages: number): number {
+  if (!list || list.length !== pages) return 0;
+  let n = 0;
+  list.forEach((text, i) => {
+    if (text.trim() && !notes.get(deckId, i).trim()) {
+      notes.set(deckId, i, text);
+      n += 1;
+    }
+  });
+  if (n > 0) publishState();
+  return n;
+}
+
 function closeDeck() {
   stopPresenting();
   opened = null;
@@ -248,7 +374,12 @@ async function openDialog(): Promise<OpenResult> {
   const r = await dialog.showOpenDialog(mainWin, {
     title: t.home.open,
     properties: ['openFile', 'multiSelections'],
-    filters: [{ name: 'PDF, Images', extensions: ['pdf', ...IMAGE_EXT.map((e) => e.slice(1))] }],
+    filters: [
+      {
+        name: 'PDF, PowerPoint, Keynote, Images',
+        extensions: ['pdf', ...PRESENTATION_EXT.map((e) => e.slice(1)), ...IMAGE_EXT.map((e) => e.slice(1))],
+      },
+    ],
   });
   if (r.canceled || r.filePaths.length === 0) return { ok: false, reason: 'canceled' };
   return openPaths(r.filePaths);
@@ -273,7 +404,7 @@ async function startPresenting() {
     // 미러링 중이면 노트북에 발표자 화면을 따로 띄울 수 없다. 발표하는 동안만 확장 모드로 바꾼다.
     if (!windowedAudience) {
       mirrorSnapshot = await unmirrorForPresenting();
-      if (mirrorSnapshot && live(mainWin)) mainWin.webContents.send(IPC.notice, 'mirrorOff');
+      if (mirrorSnapshot) notice({ kind: 'mirrorOff' });
     }
 
     const twoScreens = screen.getAllDisplays().length > 1;
@@ -464,6 +595,14 @@ function registerIpc() {
     pendingLoads.get(r.reqId)?.(r);
     pendingLoads.delete(r.reqId);
   });
+  ipcMain.on(IPC.workerTextDone, (_e, reqId: number, text: string | null) => {
+    pendingText.get(reqId)?.(text);
+    pendingText.delete(reqId);
+  });
+  ipcMain.handle(IPC.getAiConnection, () => aiConnection());
+  ipcMain.on(IPC.copyText, (_e, text: unknown) => {
+    if (typeof text === 'string' && text.length < 10_000) clipboard.writeText(text);
+  });
   ipcMain.on(IPC.workerThumbDone, (_e, deckId: string, index: number, jpeg: Uint8Array | null) => {
     thumbs.put(deckId, index, jpeg ? Buffer.from(jpeg) : null);
   });
@@ -500,7 +639,9 @@ function registerAppProtocol() {
 }
 
 function filesFromArgv(argv: string[]): string[] {
-  return argv.slice(app.isPackaged ? 1 : 2).filter((a) => !a.startsWith('-') && /\.(pdf|png|jpe?g|webp|gif)$/i.test(a));
+  return argv
+    .slice(app.isPackaged ? 1 : 2)
+    .filter((a) => !a.startsWith('-') && (/\.(pdf|png|jpe?g|webp|gif)$/i.test(a) || isPresentation(a)));
 }
 
 app.on('web-contents-created', (_e, contents) => {
@@ -514,13 +655,13 @@ app.on('second-instance', (_e, argv) => {
     mainWin.focus();
   }
   const files = filesFromArgv(argv);
-  if (files.length) void openPaths(files);
+  if (files.length) void openFromOutside(files);
 });
 
 // 맥에서 PDF 를 앱 아이콘에 끌어 놓거나 "다음으로 열기" 했을 때
 app.on('open-file', (e, file) => {
   e.preventDefault();
-  if (app.isReady() && live(workerWin)) void openPaths([file]);
+  if (app.isReady() && live(workerWin)) void openFromOutside([file]);
   else pendingOpen = [file];
 });
 
@@ -531,6 +672,7 @@ app.whenReady().then(async () => {
   pairingToken = token.get();
   addresses = lanAddresses();
   port = await server.listen(DEFAULT_PORT);
+  mcpPort = await mcp.listen(DEFAULT_MCP_PORT);
 
   workerWin = createWorkerWindow();
   const w = workerWin;
@@ -560,12 +702,13 @@ app.whenReady().then(async () => {
 
   const initial = pendingOpen ?? filesFromArgv(process.argv);
   pendingOpen = null;
-  if (initial.length) void openPaths(initial);
+  if (initial.length) void openFromOutside(initial);
 });
 
 app.on('window-all-closed', () => app.quit());
 app.on('before-quit', () => {
   server.close();
+  mcp.close();
   if (mirrorSnapshot) restoreMirrorSync(mirrorSnapshot);
   mirrorSnapshot = null;
 });

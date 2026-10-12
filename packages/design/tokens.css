@@ -1,12 +1,16 @@
 /* DESIGN.md 의 토큰. 색·모서리·글자는 여기서만 정의한다.
-   :root 는 다크. 시스템 테마를 따르는 화면(데스크톱 홈)만 html[data-theme="system"] 을 붙여 라이트를 허용한다. */
+   :root 는 다크. 시스템 테마를 따르는 화면(데스크톱 홈)만 html[data-theme="system"] 을 붙여 라이트를 허용한다.
+   라이트 화면 안에서 일부만 어둡게 고정하려면 그 요소에 data-theme="dark" 를 붙인다 (홈페이지의 폰 모형). */
 
-:root {
+:root,
+[data-theme="dark"] {
   --bg: #0c0a09;
   --bg-raised: #1c1917;
   --surface: #292524;
   --surface-hover: #33302d;
   --surface-press: #44403c;
+  /* surface 위에 한 단계 떠오른 것 (세그먼트의 고른 칸). 다크에선 더 밝게, 라이트에선 흰색 */
+  --surface-raised: #44403c;
   --fg: #fafaf9;
   --fg-muted: #a8a29e;
   --fg-subtle: #8a837d;
@@ -62,6 +66,7 @@
     --surface: #f0efed;
     --surface-hover: #e7e5e4;
     --surface-press: #d6d3d1;
+    --surface-raised: #ffffff;
     --fg: #0c0a09;
     --fg-muted: #6b655f;
     --fg-subtle: #a8a29e;
@@ -83,7 +88,8 @@
 /* Apple 의 연속 곡선 모서리. 지원하는 곳(Electron, 안드로이드 Chrome)에서만 켠다.
    같은 값이면 원호보다 덜 둥글어 보여서 토큰을 키운다. */
 @supports (corner-shape: squircle) {
-  :root {
+  :root,
+  [data-theme="dark"] {
     --r-xl: 40px;
     --r-lg: 28px;
     --r-md: 20px;
@@ -91,7 +97,7 @@
   }
   *, *::before, *::after { corner-shape: squircle; }
   /* 알약 버튼과 원(색 점, 상태 점)은 원호 그대로 둔다. squircle 로 바꾸면 알약이 둥근 네모가 된다 */
-  .btn, .btn-text, .icon-btn, .clock-btn, .toast, select, .swatch, .finger, .circle, .circle::before { corner-shape: round; }
+  .btn, .btn-text, .icon-btn, .clock-btn, .toast, select, .swatch, .finger, .seg, .seg-item, .circle, .circle::before { corner-shape: round; }
 }
 
 *, *::before, *::after { box-sizing: border-box; }

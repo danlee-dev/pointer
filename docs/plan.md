@@ -147,12 +147,15 @@ MSIX 패키지를 만들어 올린다.
 
 ## 다음 할 것
 
-1. **PPT·PPTX·Keynote 열기**: 설치된 PowerPoint / Keynote / LibreOffice 로 PDF 로 바꿔서 연다.
-   PPTX 의 발표자 노트는 장별 메모로 자동으로 가져온다. 애니메이션·동영상은 빠진다 (그건 3단계 조종 모드).
-2. **AI 와 같이 대본 짜기 (MCP)**: 데스크톱 앱이 이 컴퓨터 안에서만 열리는 MCP 서버를 띄운다.
-   Claude Code·Claude Desktop·Codex 가 붙어서 장별 텍스트·이미지를 읽고 메모(대본)를 쓴다.
-   쓴 메모는 발표자 보기와 폰에 바로 뜬다. 사용자 구독으로 돌아가서 앱 쪽 API 비용 없음.
-3. 2단계 iOS 앱
+1. ~~PPT·PPTX·Keynote 열기~~ (완료 2026-10-12): 맥은 PowerPoint -> Keynote -> LibreOffice, 윈도우는 PowerPoint(COM) -> LibreOffice.
+   샌드박스 앱이라 그 앱의 컨테이너 폴더를 거쳐 변환한다. 숨긴 장은 PDF·노트 둘 다에서 빠진다.
+   노트는 비어 있는 장에만 넣는다. 윈도우 변환은 아직 실제로 돌려 보지 못했다.
+2. ~~AI 와 같이 대본 짜기 (MCP)~~ (완료 2026-10-12): 127.0.0.1:4750/mcp?k=토큰, stateless Streamable HTTP.
+   도구 get_presentation / read_slides / view_slide / write_notes / write_notes_batch / go_to_slide(발표 중엔 막음),
+   프롬프트 write_script. 쓴 메모는 발표자 보기(입력 중이 아니면)와 폰에 바로 뜬다. 앱 쪽 API 비용 없음.
+3. ~~2단계 iOS 앱~~ (완료 2026-10-12, 시뮬레이터 검증): Expo SDK 57 / RN 0.86 / React 19.2.3 (모노레포 전체 맞춤).
+   연결 코드는 packages/remote-core 로 웹 리모컨과 공유. 볼륨 버튼은 기본 꺼짐 + 한 번 제안(심사 2.5.9),
+   에어 포인터는 '에어' 도구. 실제 아이폰에서 볼륨 버튼·자이로 감도 확인이 남았다.
 4. 앱 이름 정하기 -> 로고 워드마크 다시 만들기
 
 ## 아직 정할 것

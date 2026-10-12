@@ -1,0 +1,73 @@
+---
+import '@pointer/design/tokens.css';
+import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
+import '../styles/site.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import favicon from '../../../../brand/logo/icon-small.svg?url';
+import appleTouchIcon from '../../../../brand/logo/png/apple-touch-icon.png?url';
+import { site, localePath, type Lang } from '../site';
+import { common } from '../i18n/common';
+
+interface Props {
+  lang: Lang;
+  path: '/' | '/privacy' | '/support';
+  title: string;
+  description: string;
+}
+const { lang, path, title, description } = Astro.props;
+const t = common[lang];
+const abs = (p: string) => new URL(p, Astro.site).href;
+const canonical = abs(localePath(lang, path));
+const og = abs(lang === 'ko' ? '/og.png' : '/og-en.png');
+---
+
+<!doctype html>
+<html lang={t.htmlLang} data-theme="system">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="ko" href={abs(localePath('ko', path))} />
+    <link rel="alternate" hreflang="en" href={abs(localePath('en', path))} />
+    <link rel="alternate" hreflang="x-default" href={abs(localePath('ko', path))} />
+    <meta name="color-scheme" content="light dark" />
+    {/* tokens.css 의 --bg 와 같은 값 (meta 에는 CSS 변수를 못 쓴다) */}
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f4" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c0a09" />
+    <link rel="icon" href={favicon} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={appleTouchIcon} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={og} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={t.tagline} />
+    <meta property="og:locale" content={t.ogLocale} />
+    <meta property="og:locale:alternate" content={lang === 'ko' ? common.en.ogLocale : common.ko.ogLocale} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={og} />
+
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body>
+    <a class="skip" href="#main">{t.skip}</a>
+    <Header lang={lang} path={path} />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer lang={lang} path={path} />
+    <script>
+      import { initReveal } from '../scripts/reveal';
+      initReveal();
+    </script>
+  </body>
+</html>

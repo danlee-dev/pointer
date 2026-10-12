@@ -1,0 +1,191 @@
+---
+// 쓰는 순서 세 장면. 한 판(panel) 안에 이어지는 그림으로 그린다 (번호 카드 격자 대신).
+// 색은 전부 토큰. 폰은 data-theme="dark" 로 어둡게 고정.
+import Phrases from './Phrases.astro';
+import { landing } from '../i18n/landing';
+import type { Lang } from '../site';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = landing[lang].steps;
+
+// 그럴듯한 QR 무늬 (실제로 읽히는 코드는 아니다): 21칸, 세 모서리에 위치 표시
+const N = 21;
+let seed = 7;
+const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const finder = (x: number, y: number) => {
+  for (const [fx, fy] of [[0, 0], [N - 7, 0], [0, N - 7]] as const) {
+    const dx = x - fx;
+    const dy = y - fy;
+    if (dx >= -1 && dx <= 7 && dy >= -1 && dy <= 7) {
+      if (dx < 0 || dy < 0 || dx > 6 || dy > 6) return 0;
+      const ring = Math.max(Math.abs(dx - 3), Math.abs(dy - 3));
+      return ring === 2 ? 0 : 1;
+    }
+  }
+  return -1;
+};
+const cells: [number, number][] = [];
+for (let y = 0; y < N; y++)
+  for (let x = 0; x < N; x++) {
+    const f = finder(x, y);
+    if (f === 1 || (f === -1 && rnd() > 0.52)) cells.push([x, y]);
+  }
+const qrPath = cells.map(([x, y]) => `M${x} ${y}h1v1h-1z`).join('');
+---
+
+<section class="section steps" id="how" aria-labelledby="how-title">
+  <div class="wrap">
+    <h2 class="h2 steps-title" id="how-title" data-reveal><Phrases text={t.title} /></h2>
+
+    <ol class="steps-panel" data-reveal>
+      <li class="step">
+        <svg class="scene" viewBox="0 0 400 300" role="presentation" aria-hidden="true">
+          <rect class="sv-win" x="34" y="36" width="332" height="228" rx="18" />
+          <circle class="sv-dot" cx="56" cy="56" r="4" />
+          <circle class="sv-dot" cx="70" cy="56" r="4" />
+          <circle class="sv-dot" cx="84" cy="56" r="4" />
+          <rect class="sv-drop" x="62" y="78" width="276" height="160" rx="14" />
+          <text class="sv-caption" x="200" y="222" text-anchor="middle">{t.drop}</text>
+          <g class="sv-file">
+            <rect class="sv-shadow" x="166" y="104" width="72" height="92" rx="10" />
+            <rect class="sv-paper" x="162" y="98" width="72" height="92" rx="10" />
+            <rect class="sv-ink-soft" x="174" y="114" width="40" height="6" rx="3" />
+            <rect class="sv-ink-soft" x="174" y="126" width="48" height="4" rx="2" />
+            <rect class="sv-ink-soft" x="174" y="135" width="30" height="4" rx="2" />
+            <rect class="sv-ink" x="174" y="160" width="10" height="16" rx="2" />
+            <rect class="sv-ink" x="188" y="152" width="10" height="24" rx="2" />
+            <rect class="sv-ink" x="202" y="144" width="10" height="32" rx="2" />
+          </g>
+          <text class="sv-label" x="198" y="94" text-anchor="middle">{t.file}</text>
+          <path class="sv-cursor" d="M226 172l0 30 8-8 6 13 6-3-6-12 11 0z" />
+        </svg>
+        <div class="step-text">
+          <h3><span class="step-n num">1</span>{t.items[0]!.title}</h3>
+          <p>{t.items[0]!.body}</p>
+        </div>
+      </li>
+
+      <li class="step">
+        <svg class="scene" viewBox="0 0 400 300" role="presentation" aria-hidden="true">
+          <rect class="sv-win" x="20" y="36" width="250" height="196" rx="18" />
+          <circle class="sv-dot" cx="42" cy="56" r="4" />
+          <circle class="sv-dot" cx="56" cy="56" r="4" />
+          <circle class="sv-dot" cx="70" cy="56" r="4" />
+          <rect class="sv-paper" x="66" y="76" width="118" height="118" rx="12" />
+          <g transform="translate(76 86) scale(4.666)">
+            <path class="sv-qr" d={qrPath} />
+          </g>
+          <g data-theme="dark">
+            <rect class="sv-phone" x="236" y="88" width="132" height="196" rx="26" />
+            <rect class="sv-phone-screen" x="243" y="95" width="118" height="182" rx="20" />
+            <rect class="sv-paper" x="262" y="146" width="80" height="80" rx="8" />
+            <g transform="translate(268 152) scale(3.24)">
+              <path class="sv-qr" d={qrPath} />
+            </g>
+            <path class="sv-frame" d="M256 156v-14h14M348 156v-14h-14M256 216v14h14M348 216v14h-14" />
+            <rect class="sv-island" x="286" y="102" width="32" height="8" rx="4" />
+          </g>
+        </svg>
+        <div class="step-text">
+          <h3><span class="step-n num">2</span>{t.items[1]!.title}</h3>
+          <p>{t.items[1]!.body}</p>
+        </div>
+      </li>
+
+      <li class="step">
+        <svg class="scene" viewBox="0 0 400 300" role="presentation" aria-hidden="true">
+          <defs>
+            <radialGradient id="step-laser">
+              <stop offset="0" stop-color="#fff" />
+              <stop offset="0.25" stop-color="#ff8a80" />
+              <stop offset="0.5" style="stop-color: var(--laser)" />
+              <stop offset="1" style="stop-color: var(--laser)" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <rect class="sv-screen" x="16" y="30" width="270" height="160" rx="12" />
+          <rect class="sv-paper" x="24" y="38" width="254" height="144" rx="4" />
+          <rect class="sv-ink" x="44" y="56" width="70" height="7" rx="3.5" />
+          <rect class="sv-ink-soft" x="52" y="132" width="26" height="30" rx="3" />
+          <rect class="sv-ink-soft" x="88" y="122" width="26" height="40" rx="3" />
+          <rect class="sv-ink-soft" x="124" y="112" width="26" height="50" rx="3" />
+          <rect class="sv-ink-soft" x="160" y="100" width="26" height="62" rx="3" />
+          <rect class="sv-ink" x="196" y="80" width="26" height="82" rx="3" />
+          <circle cx="209" cy="74" r="16" fill="url(#step-laser)" />
+          <g data-theme="dark">
+            <rect class="sv-phone" x="250" y="104" width="124" height="186" rx="26" />
+            <rect class="sv-phone-screen" x="257" y="111" width="110" height="172" rx="20" />
+            <rect class="sv-paper" x="265" y="128" width="94" height="53" rx="6" />
+            <rect class="sv-ink" x="321" y="146" width="8" height="28" rx="1.5" />
+            <rect class="sv-ink-soft" x="273" y="160" width="8" height="14" rx="1.5" />
+            <rect class="sv-ink-soft" x="285" y="156" width="8" height="18" rx="1.5" />
+            <rect class="sv-ink-soft" x="297" y="152" width="8" height="22" rx="1.5" />
+            <rect class="sv-ink-soft" x="309" y="149" width="8" height="25" rx="1.5" />
+            <circle cx="325" cy="142" r="7" fill="url(#step-laser)" />
+            <rect class="sv-btn" x="265" y="190" width="30" height="84" rx="12" />
+            <rect class="sv-btn-strong" x="299" y="190" width="60" height="84" rx="12" />
+            <text class="sv-next" x="329" y="238" text-anchor="middle">{lang === 'ko' ? '다음' : 'Next'}</text>
+            <rect class="sv-island" x="296" y="117" width="32" height="7" rx="3.5" />
+          </g>
+        </svg>
+        <div class="step-text">
+          <h3><span class="step-n num">3</span>{t.items[2]!.title}</h3>
+          <p>{t.items[2]!.body}</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<style>
+  .steps-title { max-width: 18em; }
+  .steps-panel {
+    margin-top: clamp(32px, 5vw, 56px);
+    display: grid;
+    gap: 8px;
+    padding: clamp(12px, 2vw, 20px);
+    border-radius: var(--r-xl);
+    background: var(--bg-raised);
+  }
+  @media (min-width: 900px) {
+    .steps-panel { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  }
+  .step { display: grid; align-content: start; }
+  /* 태블릿: 그림 옆에 글 */
+  @media (min-width: 600px) and (max-width: 899px) {
+    .step { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: center; gap: 8px; }
+  }
+  .scene {
+    width: 100%;
+    height: auto;
+    border-radius: max(var(--r-sm), calc(var(--r-xl) - 16px));
+    background: var(--bg);
+  }
+  .step-text { padding: 20px 12px 16px; display: grid; gap: 8px; }
+  .step-text h3 { font-size: 1.1875rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.35; }
+  .step-text p { color: var(--fg-muted); line-height: 1.65; }
+  .step-n { display: inline-block; min-width: 1.4em; color: var(--fg-muted); font-weight: 300; }
+
+  /* 그림 안 색 (토큰) */
+  .sv-win { fill: var(--bg-raised); }
+  .sv-dot { fill: var(--surface-press); }
+  .sv-drop { fill: none; stroke: var(--fg-subtle); stroke-width: 1.5; stroke-dasharray: 6 6; }
+  .sv-caption { fill: var(--fg-muted); font-size: 12px; font-family: var(--font); }
+  .sv-label { fill: var(--fg); font-size: 12px; font-weight: 600; font-family: var(--font); }
+  .sv-shadow { fill: var(--fg); opacity: 0.08; }
+  .sv-paper { fill: var(--slide-paper); }
+  .sv-ink { fill: var(--slide-ink); }
+  .sv-ink-soft { fill: var(--slide-soft); }
+  .sv-cursor { fill: var(--fg); stroke: var(--bg-raised); stroke-width: 2; stroke-linejoin: round; }
+  .sv-qr { fill: var(--slide-ink); }
+  .sv-phone { fill: var(--bg-raised); stroke: var(--surface-press); stroke-width: 1.5; }
+  .sv-phone-screen { fill: var(--bg); }
+  .sv-island { fill: #000; }
+  .sv-frame { fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .sv-screen { fill: var(--screen-black); }
+  .sv-btn { fill: var(--bg-raised); }
+  .sv-btn-strong { fill: var(--surface); }
+  .sv-next { fill: var(--fg); font-size: 14px; font-weight: 300; font-family: var(--font); }
+</style>

@@ -13,6 +13,15 @@ export type PenColor = 'red' | 'yellow' | 'blue' | 'white';
 export const TOOLS: readonly Tool[] = ['laser', 'spotlight', 'magnify', 'pen'];
 export const PEN_COLORS: readonly PenColor[] = ['red', 'yellow', 'blue', 'white'];
 
+/**
+ * 청중 화면에 잠깐 띄우는 연출 (소리 + 애니메이션).
+ * 누르는 순간 on:true, 떼는 순간 on:false 를 보낸다. 누르고 있는 동안 계속 이어지고
+ * (두구두구, 박수, 꽃가루, 불꽃), 떼면 마무리한다 (두구두구는 '짠').
+ * 마이크 드롭·정답·오답은 한 번 재생하고 끝나서 떼는 신호를 무시한다.
+ */
+export type Cue = 'confetti' | 'drumroll' | 'applause' | 'fireworks' | 'micdrop' | 'correct' | 'wrong';
+export const CUES: readonly Cue[] = ['confetti', 'drumroll', 'applause', 'fireworks', 'micdrop', 'correct', 'wrong'];
+
 /** 장 하나의 크기. 단위는 상관없고 비율만 쓴다 (PDF 는 pt, 이미지는 px). */
 export interface PageSize {
   w: number;
@@ -68,6 +77,7 @@ export type ClientMessage =
   | { t: 'clearInk' }
   | { t: 'timer'; action: 'start' | 'pause' | 'reset' }
   | { t: 'timerTarget'; ms: number | null }
+  | { t: 'cue'; cue: Cue; on: boolean }
   | { t: 'ping'; at: number };
 
 // ---------- 데스크톱 -> 폰 ----------
@@ -142,6 +152,8 @@ export function parseClientMessage(raw: string): ClientMessage | null {
       return Number.isInteger(m.ms) && (m.ms as number) > 0 && (m.ms as number) <= MAX_TARGET_MS
         ? { t: 'timerTarget', ms: m.ms as number }
         : null;
+    case 'cue':
+      return oneOf(CUES, m.cue) && typeof m.on === 'boolean' ? { t: 'cue', cue: m.cue, on: m.on } : null;
     case 'ping':
       return typeof m.at === 'number' && Number.isFinite(m.at) ? { t: 'ping', at: m.at } : null;
     default:
