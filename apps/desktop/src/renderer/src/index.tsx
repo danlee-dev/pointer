@@ -21,7 +21,21 @@ function App() {
   const hasDeck = !!state?.deck;
 
   useEffect(() => window.pointer.onPasswordRequest(setPassword), []);
-  useEffect(() => window.pointer.onNotice((n) => n === 'mirrorOff' && setToast(t.presenter.mirrorOff)), [t]);
+  // 변환처럼 오래 걸리는 일은 끝날 때까지 떠 있는 알림으로 보여 준다
+  const [busy, setBusy] = useState<string | null>(null);
+  useEffect(
+    () =>
+      window.pointer.onNotice((n) => {
+        if (n.kind === 'mirrorOff') setToast(t.presenter.mirrorOff);
+        else if (n.kind === 'converting') setBusy(t.convert.converting[n.via]);
+        else if (n.kind === 'openFailed') onResultRef.current({ ok: false, reason: n.reason });
+        else {
+          setBusy(null);
+          if (n.notes > 0) setToast(t.convert.notesImported(n.notes));
+        }
+      }),
+    [t],
+  );
 
   // 홈은 시스템 라이트/다크를 따르고, 발표자 화면은 어두운 테마로 고정한다 (DESIGN.md)
   useEffect(() => {
@@ -35,10 +49,14 @@ function App() {
     return () => clearTimeout(id);
   }, [toast]);
 
+  const onResultRef = useRef<(r: OpenResult) => void>(() => {});
   const onResult = (r: OpenResult) => {
+    setBusy(null);
     if (r.ok || r.reason === 'canceled') return;
     setToast(r.reason === 'open' ? t.error.open : t.error[r.reason]);
   };
+
+  onResultRef.current = onResult;
 
   // 창 어디에 떨어뜨려도 연다 (발표 중이면 자료를 바꾼다)
   const dropHandlers = {
@@ -75,10 +93,17 @@ function App() {
         </>
       )}
       {password && <PasswordSheet title={password.title} wrong={password.wrong} t={t} />}
-      {toast && (
-        <div className="toast" role="status">
-          {toast}
+      {busy ? (
+        <div className="toast busy" role="status">
+          <span className="spinner circle" aria-hidden="true" />
+          {busy}
         </div>
+      ) : (
+        toast && (
+          <div className="toast" role="status">
+            {toast}
+          </div>
+        )
       )}
     </div>
   );

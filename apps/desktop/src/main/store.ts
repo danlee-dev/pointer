@@ -63,6 +63,15 @@ export const recent = {
     const rest = recent.list().filter((e) => !sameEntry(e.paths, entry.paths));
     writeJson('recent.json', [entry, ...rest].slice(0, MAX_RECENT));
   },
+  /** 변환해서 연 자료: 목록에는 변환된 PDF 대신 원래 파일을 남긴다 */
+  replaceLatest(paths: string[], patch: Pick<RecentEntry, 'paths' | 'title'>) {
+    const list = recent.list();
+    const i = list.findIndex((e) => sameEntry(e.paths, paths));
+    if (i < 0) return;
+    const entry = { ...list[i]!, ...patch };
+    const rest = list.filter((e, j) => j !== i && !sameEntry(e.paths, patch.paths));
+    writeJson('recent.json', [entry, ...rest].slice(0, MAX_RECENT));
+  },
   remove(paths: string[]) {
     writeJson('recent.json', recent.list().filter((e) => !sameEntry(e.paths, paths)));
   },

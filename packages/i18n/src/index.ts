@@ -67,7 +67,7 @@ const ko = {
   // ---------- 데스크톱 홈 ----------
   home: {
     dropTitle: '발표 자료를 여기로 끌어 놓으세요',
-    dropSub: 'PDF, 또는 이미지 여러 장 (PNG, JPG, WebP, GIF)',
+    dropSub: 'PDF, PowerPoint, Keynote, 또는 이미지 여러 장',
     open: '파일 열기',
     recent: '최근 자료',
     recentEmpty: '열었던 자료가 여기에 쌓입니다.',
@@ -118,10 +118,22 @@ const ko = {
     submit: '열기',
   },
 
+  convert: {
+    converting: {
+      powerpoint: 'PowerPoint 로 PDF 를 만드는 중입니다. 처음 한 번만 걸립니다.',
+      keynote: 'Keynote 로 PDF 를 만드는 중입니다. 처음 한 번만 걸립니다.',
+      libreoffice: 'LibreOffice 로 PDF 를 만드는 중입니다. 처음 한 번만 걸립니다.',
+    },
+    notesImported: (n: number) => `발표자 노트 ${n}장을 메모로 가져왔습니다.`,
+  },
+
   error: {
     open: '이 파일을 열 수 없습니다',
-    mixed: 'PDF 와 이미지는 따로 열어 주세요. PDF 는 한 번에 하나만 열 수 있습니다.',
-    unsupported: '지원하지 않는 형식입니다. PDF 나 이미지(PNG, JPG, WebP, GIF)를 열어 주세요.',
+    noConverter: 'PowerPoint, Keynote, LibreOffice 중 하나가 있어야 이 파일을 열 수 있습니다. 발표 앱에서 PDF 로 내보내서 열어도 됩니다.',
+    convertFailed: 'PDF 로 바꾸지 못했습니다. 발표 앱에서 PDF 로 내보낸 뒤 열어 주세요.',
+    convertTimeout: '변환이 너무 오래 걸려서 멈췄습니다. 발표 앱에 대화상자가 떠 있는지 확인해 주세요.',
+    mixed: 'PDF·발표 파일은 한 번에 하나만, 이미지와 섞지 말고 열어 주세요.',
+    unsupported: '지원하지 않는 형식입니다. PDF, PowerPoint, Keynote, 이미지(PNG, JPG, WebP, GIF)를 열어 주세요.',
     noImages: '이 폴더에 이미지가 없습니다.',
   },
 
@@ -205,7 +217,7 @@ const en: Messages = {
 
   home: {
     dropTitle: 'Drop a presentation here',
-    dropSub: 'A PDF, or a set of images (PNG, JPG, WebP, GIF)',
+    dropSub: 'A PDF, PowerPoint or Keynote file, or a set of images',
     open: 'Open file',
     recent: 'Recent',
     recentEmpty: 'Files you open will show up here.',
@@ -255,10 +267,22 @@ const en: Messages = {
     submit: 'Open',
   },
 
+  convert: {
+    converting: {
+      powerpoint: 'Making a PDF with PowerPoint. This only happens the first time.',
+      keynote: 'Making a PDF with Keynote. This only happens the first time.',
+      libreoffice: 'Making a PDF with LibreOffice. This only happens the first time.',
+    },
+    notesImported: (n: number) => (n === 1 ? 'Imported speaker notes for 1 slide.' : `Imported speaker notes for ${n} slides.`),
+  },
+
   error: {
     open: "Couldn't open this file",
-    mixed: 'Open PDFs and images separately. Only one PDF can be open at a time.',
-    unsupported: 'Unsupported format. Open a PDF or images (PNG, JPG, WebP, GIF).',
+    noConverter: 'Opening this file needs PowerPoint, Keynote or LibreOffice. You can also export it to PDF and open that.',
+    convertFailed: "Couldn't convert it to PDF. Export it to PDF from your presentation app and open that.",
+    convertTimeout: 'Conversion took too long and was stopped. Check whether your presentation app is showing a dialog.',
+    mixed: 'Open one PDF or presentation at a time, and keep images separate.',
+    unsupported: 'Unsupported format. Open a PDF, PowerPoint or Keynote file, or images (PNG, JPG, WebP, GIF).',
     noImages: 'There are no images in this folder.',
   },
 

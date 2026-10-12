@@ -147,8 +147,9 @@ MSIX 패키지를 만들어 올린다.
 
 ## 다음 할 것
 
-1. **PPT·PPTX·Keynote 열기**: 설치된 PowerPoint / Keynote / LibreOffice 로 PDF 로 바꿔서 연다.
-   PPTX 의 발표자 노트는 장별 메모로 자동으로 가져온다. 애니메이션·동영상은 빠진다 (그건 3단계 조종 모드).
+1. ~~PPT·PPTX·Keynote 열기~~ (완료 2026-10-12): 맥은 PowerPoint -> Keynote -> LibreOffice, 윈도우는 PowerPoint(COM) -> LibreOffice.
+   샌드박스 앱이라 그 앱의 컨테이너 폴더를 거쳐 변환한다. 숨긴 장은 PDF·노트 둘 다에서 빠진다.
+   노트는 비어 있는 장에만 넣는다. 윈도우 변환은 아직 실제로 돌려 보지 못했다.
 2. **AI 와 같이 대본 짜기 (MCP)**: 데스크톱 앱이 이 컴퓨터 안에서만 열리는 MCP 서버를 띄운다.
    Claude Code·Claude Desktop·Codex 가 붙어서 장별 텍스트·이미지를 읽고 메모(대본)를 쓴다.
    쓴 메모는 발표자 보기와 폰에 바로 뜬다. 사용자 구독으로 돌아가서 앱 쪽 API 비용 없음.
