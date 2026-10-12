@@ -1,0 +1,12 @@
+{
+  "name": "pointer",
+  "private": true,
+  "type": "module",
+  "description": "PDF 발표를 맥에 띄우고 폰 브라우저로 넘기기·레이저 포인터",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}

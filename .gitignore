@@ -1,0 +1,14 @@
+node_modules/
+cache/
+.token
+*.pdf
+.DS_Store
+.env
+.env.local
+out/
+dist/
+release/
+*.tsbuildinfo
+.kpi/
+apps/desktop/src/renderer/public/pdfjs/
+apps/desktop/native/bin/

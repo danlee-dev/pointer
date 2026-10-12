@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="리모컨">
+<meta name="theme-color" content="#0b0b0c">
+<title>리모컨</title>
+<style>
+  :root {
+    --bg: #0b0b0c;
+    --surface: #18181a;
+    --surface-up: #242427;
+    --surface-press: #34343a;
+    --ink: #f4f4f2;
+    --ink-dim: #8a8a87;
+    --laser: #ff3b3b;
+    --ok: #7ee2a8;
+    --ar: 1.7778;
+    --font: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    letter-spacing: -0.025em;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
+  }
+  button {
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+  }
+  img { -webkit-user-drag: none; -webkit-touch-callout: none; }
+
+  .app {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding:
+      max(10px, env(safe-area-inset-top))
+      max(14px, env(safe-area-inset-right))
+      max(14px, env(safe-area-inset-bottom))
+      max(14px, env(safe-area-inset-left));
+  }
+
+  /* ---------- 상단 ---------- */
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+  }
+  .count {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 6px 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .count b { font-size: 30px; font-weight: 750; letter-spacing: -0.04em; line-height: 1; }
+  .count span { font-size: 15px; color: var(--ink-dim); }
+  .timer {
+    font-size: 20px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+    color: var(--ink-dim);
+    padding: 8px 10px;
+  }
+  .timer.run { color: var(--ink); }
+  .blk {
+    font-size: 15px;
+    color: var(--ink-dim);
+    padding: 10px 2px 10px 10px;
+  }
+  .blk.on { color: var(--laser); font-weight: 600; }
+
+  .offline {
+    display: none;
+    font-size: 13px;
+    color: var(--laser);
+    margin: -6px 0 -4px;
+  }
+  .offline.on { display: block; }
+
+  /* ---------- 레이저 패드 = 현재 슬라이드 ---------- */
+  .pad {
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--ar);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+    touch-action: none;
+    flex: none;
+  }
+  .pad img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .pad.pointing img { filter: brightness(0.82); }
+  .dot {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 22px;
+    height: 22px;
+    margin: -11px 0 0 -11px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 16%, #ff7070 32%, var(--laser) 52%, rgba(255, 59, 59, 0) 72%);
+    box-shadow: 0 0 14px 4px rgba(255, 59, 59, 0.55);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .pad.pointing .dot { opacity: 1; }
+  .hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 22px 12px 10px;
+    font-size: 13px;
+    text-align: center;
+    color: #fff;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .hint.gone { opacity: 0; }
+  .shade {
+    position: absolute;
+    inset: 0;
+    display: none;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.82);
+    font-size: 15px;
+    color: var(--ink-dim);
+  }
+  .pad.black .shade { display: grid; }
+
+  /* ---------- 넘기기 ---------- */
+  .ctrl {
+    flex: 1;
+    min-height: 150px;
+    display: flex;
+    gap: 10px;
+  }
+  .ctrl button {
+    border-radius: 16px;
+    touch-action: manipulation;
+    transition: background-color 0.08s, transform 0.08s;
+  }
+  .ctrl button:active, .ctrl button.press { background: var(--surface-press); transform: scale(0.985); }
+  .ctrl button:disabled { opacity: 0.35; }
+  .prev {
+    flex: 0 0 32%;
+    background: var(--surface);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--ink-dim);
+  }
+  .next {
+    flex: 1;
+    background: var(--surface-up);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 14px;
+  }
+  .next img {
+    width: min(78%, 220px);
+    aspect-ratio: var(--ar);
+    border-radius: 6px;
+    display: block;
+    object-fit: cover;
+    opacity: 0.9;
+  }
+  .next .label { font-size: 26px; font-weight: 750; letter-spacing: -0.04em; }
+  .next.last img { display: none; }
+
+  /* ---------- 장 이동 ---------- */
+  .jump {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    padding:
+      max(10px, env(safe-area-inset-top))
+      max(14px, env(safe-area-inset-right))
+      0
+      max(14px, env(safe-area-inset-left));
+  }
+  .jump[hidden] { display: none; }
+  .jump-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+  }
+  .jump-head h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.04em; }
+  .jump-head button { font-size: 16px; color: var(--ink-dim); padding: 10px 2px 10px 12px; }
+  .jump-list {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 10px;
+    padding: 8px 0 max(20px, env(safe-area-inset-bottom));
+    align-content: start;
+  }
+  .jump-list button { text-align: left; }
+  .jump-list img { width: 100%; aspect-ratio: var(--ar); border-radius: 6px; display: block; }
+  .jump-list span {
+    display: block;
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .jump-list button.cur img { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .jump-list button.cur span { color: var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <button class="count" id="count" aria-label="장 이동"><b id="num">-</b><span id="of"></span></button>
+      <button class="timer" id="timer" aria-label="타이머. 누르면 시작/정지, 길게 누르면 초기화">0:00</button>
+      <button class="blk" id="blk">화면 가리기</button>
+    </header>
+    <p class="offline" id="offline">맥과 연결이 끊겼습니다. 다시 연결하는 중...</p>
+
+    <section class="pad" id="pad">
+      <img id="cur" alt="">
+      <div class="dot" id="dot"></div>
+      <p class="hint" id="hint">슬라이드를 누른 채 움직이면 레이저 포인터</p>
+      <div class="shade">화면 가림. 넘기기를 누르면 다시 켜집니다</div>
+    </section>
+
+    <div class="ctrl">
+      <button class="prev" id="prev">이전</button>
+      <button class="next" id="next"><img id="nextImg" alt=""><span class="label" id="nextLabel">다음</span></button>
+    </div>
+  </main>
+
+  <div class="jump" id="jump" hidden>
+    <div class="jump-head">
+      <h2>몇 번째 장으로 갈까요</h2>
+      <button id="jumpClose">닫기</button>
+    </div>
+    <div class="jump-list" id="jumpList"></div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const thumb = (i) => `/slides/thumb/${i + 1}.jpg`;
+
+  let total = 0;
+  let index = 0;
+  let black = false;
+
+  function render() {
+    $('num').textContent = index + 1;
+    $('of').textContent = `/ ${total}`;
+    $('cur').src = thumb(index);
+    const last = index >= total - 1;
+    $('next').classList.toggle('last', last);
+    $('nextLabel').textContent = last ? '마지막 장' : '다음';
+    if (!last) $('nextImg').src = thumb(index + 1);
+    $('prev').disabled = index === 0 && !black;
+    $('pad').classList.toggle('black', black);
+    $('blk').classList.toggle('on', black);
+    $('blk').textContent = black ? '화면 켜기' : '화면 가리기';
+    for (const b of $('jumpList').children) b.classList.toggle('cur', Number(b.dataset.i) === index);
+  }
+
+  function command(cmd) {
+    return fetch('/api/cmd', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cmd),
+    })
+      .then((r) => r.json())
+      .then(applyState)
+      .catch(() => setOnline(false));
+  }
+
+  function applyState(s) {
+    total = s.total;
+    index = s.index;
+    black = s.black;
+    render();
+  }
+
+  // 누르는 즉시 화면을 바꾸고 (낙관적), 서버 상태가 오면 그걸로 맞춘다.
+  function go(dir) {
+    if (black) black = false;
+    else index = Math.max(0, Math.min(total - 1, index + dir));
+    render();
+    timerAutoStart();
+    command({ type: dir > 0 ? 'next' : 'prev' });
+  }
+  $('next').addEventListener('click', () => go(1));
+  $('prev').addEventListener('click', () => go(-1));
+  $('blk').addEventListener('click', () => {
+    black = !black;
+    render();
+    command({ type: 'black' });
+  });
+
+  // ---------- 레이저 ----------
+  const pad = $('pad');
+  const dot = $('dot');
+  let pending = null;
+  let inflight = false;
+
+  // 손가락 움직임마다 요청을 쌓지 않는다. 직전 요청이 끝나면 가장 최근 좌표만 보낸다.
+  function sendPointer(p) {
+    pending = p;
+    if (!inflight) flushPointer();
+  }
+  async function flushPointer() {
+    if (!pending) return;
+    const p = pending;
+    pending = null;
+    inflight = true;
+    try {
+      await fetch('/api/pointer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(p),
+      });
+    } catch {}
+    inflight = false;
+    if (pending) flushPointer();
+  }
+
+  function pointAt(e) {
+    const r = pad.getBoundingClientRect();
+    const x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    const y = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+    dot.style.transform = `translate(${x * r.width}px, ${y * r.height}px)`;
+    sendPointer({ on: true, x, y });
+  }
+
+  let activePointer = null;
+  pad.addEventListener('pointerdown', (e) => {
+    if (activePointer !== null) return;
+    activePointer = e.pointerId;
+    pad.setPointerCapture(e.pointerId);
+    pad.classList.add('pointing');
+    pointAt(e);
+    hideHint();
+  });
+  pad.addEventListener('pointermove', (e) => {
+    if (e.pointerId === activePointer) pointAt(e);
+  });
+  const release = (e) => {
+    if (e.pointerId !== activePointer) return;
+    activePointer = null;
+    pad.classList.remove('pointing');
+    sendPointer({ on: false });
+  };
+  pad.addEventListener('pointerup', release);
+  pad.addEventListener('pointercancel', release);
+
+  function hideHint() {
+    $('hint').classList.add('gone');
+    try { localStorage.setItem('pointer-hint-seen', '1'); } catch {}
+  }
+  try { if (localStorage.getItem('pointer-hint-seen')) $('hint').classList.add('gone'); } catch {}
+
+  // ---------- 타이머: 누르면 시작/정지, 길게 누르면 0 으로 ----------
+  let started = null;
+  let elapsed = 0;
+  let touched = false;
+  const timerEl = $('timer');
+
+  function fmt(ms) {
+    const s = Math.floor(ms / 1000);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const ss = String(s % 60).padStart(2, '0');
+    return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+  }
+  function drawTimer() {
+    const ms = elapsed + (started ? Date.now() - started : 0);
+    timerEl.textContent = fmt(ms);
+    timerEl.classList.toggle('run', !!started);
+  }
+  setInterval(drawTimer, 500);
+
+  function timerAutoStart() {
+    if (!touched && !started) {
+      touched = true;
+      started = Date.now();
+      drawTimer();
+    }
+  }
+
+  let holdTimer;
+  let held = false;
+  timerEl.addEventListener('pointerdown', () => {
+    held = false;
+    holdTimer = setTimeout(() => {
+      held = true;
+      started = null;
+      elapsed = 0;
+      touched = true;
+      drawTimer();
+    }, 700);
+  });
+  timerEl.addEventListener('pointerup', () => clearTimeout(holdTimer));
+  timerEl.addEventListener('pointercancel', () => clearTimeout(holdTimer));
+  timerEl.addEventListener('click', () => {
+    if (held) return;
+    touched = true;
+    if (started) {
+      elapsed += Date.now() - started;
+      started = null;
+    } else {
+      started = Date.now();
+    }
+    drawTimer();
+  });
+
+  // ---------- 장 이동 ----------
+  function buildJump() {
+    const list = $('jumpList');
+    list.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const b = document.createElement('button');
+      b.dataset.i = i;
+      b.innerHTML = `<img src="${thumb(i)}" alt=""><span>${i + 1}</span>`;
+      b.addEventListener('click', () => {
+        index = i;
+        black = false;
+        render();
+        command({ type: 'goto', n: i });
+        $('jump').hidden = true;
+      });
+      list.appendChild(b);
+    }
+  }
+  $('count').addEventListener('click', () => {
+    render();
+    $('jump').hidden = false;
+  });
+  $('jumpClose').addEventListener('click', () => ($('jump').hidden = true));
+
+  // ---------- 연결 ----------
+  let es = null;
+  function setOnline(on) {
+    $('offline').classList.toggle('on', !on);
+  }
+  function connect() {
+    if (es) es.close();
+    es = new EventSource('/events?role=remote');
+    es.addEventListener('open', () => setOnline(true));
+    es.addEventListener('state', (e) => {
+      setOnline(true);
+      applyState(JSON.parse(e.data));
+    });
+    es.addEventListener('error', () => {
+      setOnline(false);
+      if (es.readyState === EventSource.CLOSED) setTimeout(connect, 1500);
+    });
+  }
+  // 폰 화면이 꺼졌다 켜지면 iOS 가 연결을 끊어 둔다. 돌아오면 바로 다시 붙는다.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && (!es || es.readyState !== EventSource.OPEN)) connect();
+  });
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) connect();
+  });
+  document.addEventListener('gesturestart', (e) => e.preventDefault());
+
+  async function init() {
+    const info = await fetch('/api/info').then((r) => r.json());
+    document.documentElement.style.setProperty('--ar', info.aspect);
+    applyState(info);
+    buildJump();
+    render();
+    for (let i = 0; i < total; i++) new Image().src = thumb(i);
+    connect();
+  }
+  init().catch(() => setOnline(false));
+</script>
+</body>
+</html>

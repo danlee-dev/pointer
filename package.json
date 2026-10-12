@@ -1,0 +1,22 @@
+{
+  "name": "pointer-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.11.0",
+  "scripts": {
+    "dev": "pnpm --filter @pointer/remote-web build && pnpm --filter @pointer/desktop dev",
+    "build": "pnpm --filter @pointer/remote-web build && pnpm --filter @pointer/desktop build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r --if-present test"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild"
+    ]
+  }
+}

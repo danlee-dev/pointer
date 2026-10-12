@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>발표 화면</title>
+<style>
+  :root {
+    --bg: #000;
+    --ink: #f4f4f2;
+    --ink-dim: #8d8d8a;
+    --laser: #ff3030;
+    --ar: 1.7778;
+    --dot: clamp(16px, 1.3vw, 34px);
+    --font: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", system-ui, sans-serif;
+  }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+  body {
+    display: grid;
+    place-items: center;
+    font-family: var(--font);
+    color: var(--ink);
+    letter-spacing: -0.025em;
+  }
+  body.idle, body.idle * { cursor: none !important; }
+
+  .stage {
+    position: relative;
+    width: min(100vw, calc(100vh * var(--ar)));
+    aspect-ratio: var(--ar);
+  }
+  .stage img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .laser {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--dot);
+    height: var(--dot);
+    margin: calc(var(--dot) / -2) 0 0 calc(var(--dot) / -2);
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 16%, #ff6a6a 30%, var(--laser) 52%, rgba(255, 48, 48, 0) 72%);
+    box-shadow:
+      0 0 calc(var(--dot) * 0.6) calc(var(--dot) * 0.2) rgba(255, 48, 48, 0.7),
+      0 0 calc(var(--dot) * 2) calc(var(--dot) * 0.5) rgba(255, 48, 48, 0.22);
+    opacity: 0;
+    transition: opacity 0.12s ease-out;
+    pointer-events: none;
+    will-change: transform;
+  }
+  .laser.on { opacity: 1; }
+
+  .blackout {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .blackout.on { opacity: 1; }
+
+  .toast {
+    position: fixed;
+    right: 20px;
+    bottom: 16px;
+    font-size: 13px;
+    color: var(--ink-dim);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.on { opacity: 1; }
+
+  .connect {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 440px);
+    gap: 56px;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.9);
+    cursor: pointer;
+    padding: 24px;
+  }
+  .connect[hidden] { display: none; }
+  .qr {
+    width: min(300px, 38vw);
+    aspect-ratio: 1;
+    background: #fff;
+    border-radius: 14px;
+    padding: 14px;
+    box-sizing: border-box;
+  }
+  .qr svg { width: 100%; height: 100%; display: block; }
+  .connect h1 {
+    margin: 0 0 14px;
+    font-size: clamp(26px, 2.6vw, 38px);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1.25;
+  }
+  .connect p { margin: 0 0 10px; font-size: 15px; line-height: 1.6; color: var(--ink-dim); }
+  .connect .url {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 14px;
+    letter-spacing: 0;
+    color: var(--ink);
+    word-break: break-all;
+  }
+  .connect .status { color: var(--ink); font-weight: 600; margin-top: 22px; }
+  .connect .status.ok { color: #7ee2a8; }
+
+  @media (max-width: 760px) {
+    .connect { grid-template-columns: 1fr; gap: 28px; justify-items: center; text-align: center; }
+  }
+</style>
+</head>
+<body>
+  <div class="stage" id="stage">
+    <img id="slide" alt="">
+    <div class="laser" id="laser"></div>
+  </div>
+  <div class="blackout" id="blackout"></div>
+  <div class="toast" id="toast"></div>
+
+  <div class="connect" id="connect">
+    <div class="qr" id="qr"></div>
+    <div>
+      <h1>폰 카메라로<br>QR 을 찍으세요</h1>
+      <p class="url" id="url"></p>
+      <p>폰과 맥이 같은 와이파이에 있어야 합니다. 이 QR 을 본 사람은 누구나 슬라이드를 넘길 수 있으니, 프로젝터를 연결하기 전에 폰부터 연결하세요.</p>
+      <p class="status" id="status">리모컨 기다리는 중</p>
+      <p>아무 곳이나 클릭하면 전체 화면으로 시작합니다. Q 키로 이 화면을 다시 엽니다.</p>
+    </div>
+  </div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const slideEl = $('slide');
+  const laserEl = $('laser');
+  const stageEl = $('stage');
+
+  let total = 0;
+  let index = -1;
+  let remotes = 0;
+  const cache = [];
+  const url = (i) => `/slides/full/${i + 1}.jpg`;
+
+  function preload(i) {
+    if (i < 0 || i >= total) return null;
+    if (!cache[i]) {
+      const im = new Image();
+      im.src = url(i);
+      cache[i] = im.decode().then(() => im, () => im);
+    }
+    return cache[i];
+  }
+
+  // 빠르게 여러 번 넘기면 decode 가 순서 없이 끝난다. 마지막에 원한 장만 그린다.
+  let wanted = -1;
+  async function show(i) {
+    if (i === index) return;
+    wanted = i;
+    await preload(i);
+    if (wanted !== i) return;
+    slideEl.src = url(i);
+    index = i;
+    preload(i + 1);
+    preload(i - 1);
+  }
+
+  function applyState(s) {
+    total = s.total;
+    show(s.index);
+    $('blackout').classList.toggle('on', s.black);
+    if (s.remotes !== remotes) {
+      if (s.remotes > remotes) toast(s.remotes > 1 ? `리모컨 ${s.remotes}대 연결됨` : '리모컨 연결됨');
+      else toast(s.remotes === 0 ? '리모컨 연결 끊김' : `리모컨 ${s.remotes}대`);
+      remotes = s.remotes;
+    }
+    const st = $('status');
+    st.textContent = remotes ? `리모컨 연결됨${remotes > 1 ? ` (${remotes}대)` : ''}` : '리모컨 기다리는 중';
+    st.classList.toggle('ok', remotes > 0);
+  }
+
+  let toastTimer;
+  function toast(text) {
+    const t = $('toast');
+    t.textContent = text;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('on'), 2400);
+  }
+
+  function command(cmd) {
+    fetch('/api/cmd', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cmd),
+    });
+  }
+
+  // ---------- 레이저: 폰에서 오는 좌표는 띄엄띄엄 오니 프레임마다 따라가게 보간 ----------
+  const target = { x: 0.5, y: 0.5 };
+  const cur = { x: 0.5, y: 0.5 };
+  let laserOn = false;
+
+  function onPointer(p) {
+    if (!p.on) {
+      laserOn = false;
+      laserEl.classList.remove('on');
+      return;
+    }
+    target.x = p.x;
+    target.y = p.y;
+    if (!laserOn) {
+      // 새로 누른 자리에서 바로 시작. 이전 위치에서 미끄러져 오지 않게.
+      cur.x = p.x;
+      cur.y = p.y;
+      laserOn = true;
+      laserEl.classList.add('on');
+    }
+  }
+
+  function tick() {
+    cur.x += (target.x - cur.x) * 0.5;
+    cur.y += (target.y - cur.y) * 0.5;
+    const r = stageEl.getBoundingClientRect();
+    laserEl.style.transform = `translate(${cur.x * r.width}px, ${cur.y * r.height}px)`;
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // ---------- 연결 ----------
+  async function init() {
+    const info = await fetch('/api/info').then((r) => r.json());
+    document.documentElement.style.setProperty('--ar', info.aspect);
+    document.title = info.title;
+    total = info.total;
+    applyState(info);
+    for (let i = 0; i < total; i++) preload(i);
+
+    const es = new EventSource('/events?role=present');
+    es.addEventListener('state', (e) => applyState(JSON.parse(e.data)));
+    es.addEventListener('pointer', (e) => onPointer(JSON.parse(e.data)));
+
+    loadQr();
+  }
+
+  async function loadQr() {
+    try {
+      const r = await fetch('/api/qr.svg');
+      if (!r.ok) throw new Error();
+      $('qr').innerHTML = await r.text();
+      $('url').textContent = r.headers.get('X-Remote-Url');
+    } catch {
+      $('url').textContent = '와이파이 주소를 못 찾았습니다. 맥의 네트워크 연결을 확인하세요.';
+    }
+  }
+
+  // ---------- 맥 키보드 (클리커도 PageUp/PageDown 을 보낸다) ----------
+  // 글자 키는 e.key 대신 e.code 로 본다. 한글 입력 상태면 F 가 'ㄹ' 로 들어와서 안 먹는다.
+  const NEXT = ['ArrowRight', 'ArrowDown', 'PageDown', 'Space', 'Enter', 'NumpadEnter', 'KeyN'];
+  const PREV = ['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace', 'KeyP'];
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.code;
+    if (NEXT.includes(k)) command({ type: 'next' });
+    else if (PREV.includes(k)) command({ type: 'prev' });
+    else if (k === 'Home') command({ type: 'goto', n: 0 });
+    else if (k === 'End') command({ type: 'goto', n: total - 1 });
+    else if (k === 'KeyB' || k === 'Period') command({ type: 'black' });
+    else if (k === 'KeyF') toggleFullscreen();
+    else if (k === 'KeyQ') {
+      const c = $('connect');
+      c.hidden = !c.hidden;
+      if (!c.hidden) loadQr();
+    } else return;
+    e.preventDefault();
+  });
+
+  function toggleFullscreen() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(() => {});
+  }
+
+  stageEl.addEventListener('dblclick', toggleFullscreen);
+
+  $('connect').addEventListener('click', () => {
+    $('connect').hidden = true;
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+    keepAwake();
+  });
+
+  // 발표 중 맥 화면이 꺼지지 않게. localhost 는 secure context 라 동작한다.
+  let wakeLock = null;
+  async function keepAwake() {
+    try {
+      if ('wakeLock' in navigator && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => (wakeLock = null));
+      }
+    } catch {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') keepAwake();
+  });
+
+  let idleTimer;
+  document.addEventListener('mousemove', () => {
+    document.body.classList.remove('idle');
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => document.body.classList.add('idle'), 1500);
+  });
+
+  init();
+</script>
+</body>
+</html>
