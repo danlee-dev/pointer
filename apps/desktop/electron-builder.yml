@@ -1,0 +1,46 @@
+appId: dev.danlee.pointer
+productName: pointer
+directories:
+  output: release/${version}
+  buildResources: resources
+files:
+  - out/**
+  - package.json
+asarUnpack: []
+# 안드로이드용 웹 리모컨. 앱 안 HTTP 서버가 이 폴더를 그대로 내려준다.
+extraResources:
+  - from: ../../packages/remote-web/dist
+    to: remote-web
+fileAssociations:
+  - ext: pdf
+    name: PDF
+    role: Viewer
+
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  hardenedRuntime: true
+  # Developer ID 서명·공증은 배포 단계에서 켠다 (CSC_LINK, APPLE_ID 등 환경 변수)
+  notarize: false
+  extendInfo:
+    NSLocalNetworkUsageDescription: 같은 와이파이의 폰 리모컨과 연결하려면 로컬 네트워크 접근이 필요합니다.
+  # 미러링 상태에서 발표를 시작하면 잠시 확장 모드로 바꾸는 도우미 (scripts/build-native.mjs)
+  extraResources:
+    - from: native/bin/displays
+      to: native/displays
+
+win:
+  target:
+    - nsis
+    - appx
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+appx:
+  # Microsoft Store 제출용 (MSIX). 스토어가 서명해 주므로 인증서가 필요 없다.
+  displayName: pointer
+  identityName: pointer
+  publisher: CN=pointer
+  applicationId: pointer

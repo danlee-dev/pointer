@@ -1,0 +1,7 @@
+html, body, #root { margin: 0; height: 100%; background: #000; overflow: hidden; }
+.audience { position: fixed; inset: 0; background: #000; }
+.audience.idle, .audience.idle * { cursor: none; }
+.audience-stage { position: absolute; inset: 0; }
+.blank { position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s; }
+.blank-black { background: #000; opacity: 1; }
+.blank-white { background: #fff; opacity: 1; }
