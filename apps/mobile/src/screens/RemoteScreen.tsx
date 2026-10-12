@@ -9,11 +9,11 @@ import { AppState, Image, Pressable, ScrollView, StyleSheet, Text, View, useWind
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
-import { crossedAlerts, formatClock, thumbUrl, timerElapsed, timerRemaining, PEN_COLORS, type Blank, type Pairing, type PenColor } from '@pointer/protocol';
+import { crossedAlerts, formatClock, thumbUrl, timerElapsed, timerRemaining, PEN_COLORS, type Blank, type Cue, type Pairing, type PenColor } from '@pointer/protocol';
 import type { RemoteClient } from '@pointer/remote-core';
-import { AirIcon, LaserIcon, MagnifyIcon, MoreIcon, PenIcon, SpotlightIcon } from '../components/icons';
+import { AirIcon, LaserIcon, MagnifyIcon, MoreIcon, PenIcon, SparkleIcon, SpotlightIcon } from '../components/icons';
 import { Pad, type PadTool } from '../components/Pad';
-import { JumpSheet, MoreSheet, TimerSheet } from '../components/Sheets';
+import { CueSheet, JumpSheet, MoreSheet, TimerSheet } from '../components/Sheets';
 import { useVolumeButtons } from '../hooks/useVolumeButtons';
 import { t } from '../i18n';
 import type { Settings } from '../storage';
@@ -47,7 +47,7 @@ export function RemoteScreen({ client, pairing, settings, onSettings, onChangeCo
   const { state, status, latency, clockOffset } = snap;
   const [penColor, setPenColor] = useState<PenColor>('red');
   const [clearSignal, setClearSignal] = useState(0);
-  const [sheet, setSheet] = useState<'jump' | 'timer' | 'more' | null>(null);
+  const [sheet, setSheet] = useState<'jump' | 'timer' | 'cue' | 'more' | null>(null);
   const [hintSeen, setHintSeen] = useState<Record<string, boolean>>({});
   const now = useNow(250) + clockOffset;
   const tool = settings.tool;
@@ -90,6 +90,22 @@ export function RemoteScreen({ client, pairing, settings, onSettings, onChangeCo
   };
 
   useVolumeButtons(settings.volumeButtons && !!deck, () => nav(1), () => nav(-1));
+
+  // 효과: 누르면 톡, 두구두구는 누르고 있는 동안 손에서도 두구두구
+  const rollBuzz = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onCue = (cue: Cue, on: boolean) => {
+    client.send({ t: 'cue', cue, on });
+    if (!settings.haptics) return;
+    if (on) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (cue !== 'drumroll') return;
+    if (rollBuzz.current) clearInterval(rollBuzz.current);
+    rollBuzz.current = null;
+    if (on) rollBuzz.current = setInterval(() => void Haptics.selectionAsync(), 90);
+    else void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+  };
+  useEffect(() => () => {
+    if (rollBuzz.current) clearInterval(rollBuzz.current);
+  }, []);
 
   const setBlank = (b: Blank) => {
     client.patchState({ blank: b });
@@ -134,9 +150,14 @@ export function RemoteScreen({ client, pairing, settings, onSettings, onChangeCo
             {remaining !== null ? <Text style={styles.clockSuffix}>  {over ? t.timer.over : t.timer.left}</Text> : null}
           </Text>
         </Pressable>
-        <Pressable style={styles.iconBtn} onPress={() => setSheet('more')} accessibilityLabel={t.remote.more}>
-          <MoreIcon color={color.fgMuted} />
-        </Pressable>
+        <View style={styles.barActions}>
+          <Pressable style={styles.iconBtn} onPress={() => setSheet('cue')} accessibilityLabel={t.cue.title}>
+            <SparkleIcon color={color.fgMuted} />
+          </Pressable>
+          <Pressable style={styles.iconBtn} onPress={() => setSheet('more')} accessibilityLabel={t.remote.more}>
+            <MoreIcon color={color.fgMuted} />
+          </Pressable>
+        </View>
       </View>
 
       {status !== 'open' ? <Text style={styles.status}>{t.remote.reconnecting}</Text> : null}
@@ -244,6 +265,7 @@ export function RemoteScreen({ client, pairing, settings, onSettings, onChangeCo
         onTarget={(ms) => client.send({ t: 'timerTarget', ms })}
         onClose={() => setSheet(null)}
       />
+      <CueSheet visible={sheet === 'cue'} onCue={onCue} onClose={() => setSheet(null)} />
       <MoreSheet
         visible={sheet === 'more'}
         blank={blank}
@@ -275,6 +297,7 @@ const styles = StyleSheet.create({
   clockBtn: { height: 36, paddingHorizontal: 14, borderRadius: radius.pill, backgroundColor: color.bgRaised, justifyContent: 'center' },
   clockText: { color: color.fg, fontSize: 17, fontWeight: '600', fontVariant: ['tabular-nums'] },
   clockSuffix: { color: color.fgMuted, fontSize: 13, fontWeight: '400' },
+  barActions: { flexDirection: 'row', gap: 8 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: color.bgRaised },
   status: { color: color.warn, fontSize: 13, marginVertical: -4 },
   tools: { flexDirection: 'row', gap: 4, padding: 4, borderRadius: radius.lg, ...curve, backgroundColor: color.bgRaised },

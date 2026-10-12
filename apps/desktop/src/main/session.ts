@@ -67,10 +67,11 @@ export function reduce(s: Session, a: SessionAction, now: number): Session {
       return { ...EMPTY_SESSION, timer: timerReset(s.timer) };
     case 'presenting':
       return { ...s, presenting: a.on, blank: a.on ? s.blank : 'none' };
-    // 레이저·펜은 상태가 아니라 순간 이벤트라 여기서 다루지 않는다
+    // 레이저·펜·효과는 상태가 아니라 순간 이벤트라 여기서 다루지 않는다
     case 'pointer':
     case 'stroke':
     case 'clearInk':
+    case 'cue':
       return s;
   }
 }
