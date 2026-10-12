@@ -1,0 +1,374 @@
+/* 첫 화면 데모: 청중 화면 + 폰 리모컨 모형. 폰 안의 생김새는 packages/remote-web/src/remote.css 를 작게 줄인 것이다. */
+
+.stage { position: relative; margin-top: clamp(48px, 7vw, 88px); }
+
+/* 파스텔 구: 분위기만. 데모 뒤에서 번진다 */
+.orbs {
+  position: absolute;
+  inset: -12% -8% -6%;
+  pointer-events: none;
+  z-index: 0;
+}
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  opacity: var(--orb-strength);
+  mix-blend-mode: var(--orb-blend);
+  filter: var(--orb-filter);
+}
+.orb-mint {
+  left: 2%;
+  top: 4%;
+  width: 46%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 50% 50%, var(--orb-mint), transparent 66%);
+}
+.orb-lavender {
+  right: 0;
+  top: 18%;
+  width: 42%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 50% 50%, var(--orb-lavender), transparent 66%);
+}
+.orb-peach {
+  left: 30%;
+  bottom: 0;
+  width: 44%;
+  aspect-ratio: 1.4;
+  background: radial-gradient(ellipse at 50% 50%, var(--orb-peach), transparent 64%);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .orb-mint { animation: drift-a 22s ease-in-out infinite alternate; }
+  .orb-lavender { animation: drift-b 26s ease-in-out infinite alternate; }
+  .orb-peach { animation: drift-a 30s ease-in-out infinite alternate-reverse; }
+}
+@keyframes drift-a { to { transform: translate(6%, 5%) scale(1.06); } }
+@keyframes drift-b { to { transform: translate(-7%, 4%) scale(0.95); } }
+
+.stage-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 28px;
+}
+
+/* ---------- 청중 화면 ---------- */
+
+.screen-wrap {
+  width: 100%;
+  color: var(--fg);
+}
+.monitor {
+  padding: clamp(6px, 0.9vw, 12px);
+  border-radius: var(--r-lg);
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-raised);
+}
+.screen {
+  border-radius: max(var(--r-sm), calc(var(--r-lg) - 10px));
+  background: var(--screen-black);
+  touch-action: pan-y;
+}
+.screen .layer,
+.r-pad .layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.spot {
+  background: radial-gradient(
+    circle at var(--x, 50%) var(--y, 50%),
+    transparent 0 var(--r, 60px),
+    rgba(0, 0, 0, 0.74) calc(var(--r, 60px) + 1.5px)
+  );
+}
+.lens {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--d, 120px);
+  height: var(--d, 120px);
+  margin: calc(var(--d, 120px) / -2) 0 0 calc(var(--d, 120px) / -2);
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  box-shadow: 0 0 0 3px #fff, 0 10px 30px rgba(0, 0, 0, 0.45);
+  will-change: transform;
+}
+.lens-host {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+.cue-sound {
+  position: absolute;
+  left: 3%;
+  bottom: 4%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 90%;
+  padding: 6px 12px 6px 10px;
+  border-radius: var(--r-pill);
+  background: rgba(12, 10, 9, 0.72);
+  color: #fafaf9;
+  font-size: clamp(11px, 1.6cqw, 14px);
+  font-weight: 600;
+  line-height: 1.3;
+  pointer-events: none;
+}
+.cue-sound[hidden] { display: none; }
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 12px; }
+.eq i { width: 3px; height: 100%; border-radius: 2px; background: currentColor; transform-origin: bottom; transform: scaleY(0.4); }
+@media (prefers-reduced-motion: no-preference) {
+  .eq i { animation: eq 0.9s ease-in-out infinite alternate; }
+  .eq i:nth-child(2) { animation-delay: -0.3s; }
+  .eq i:nth-child(3) { animation-delay: -0.6s; }
+  .eq i:nth-child(4) { animation-delay: -0.15s; }
+}
+@keyframes eq { from { transform: scaleY(0.25); } to { transform: scaleY(1); } }
+
+/* ---------- 폰 ---------- */
+
+.phone {
+  --phone-w: 292px;
+  position: relative;
+  width: var(--phone-w);
+  padding: 9px;
+  border-radius: 46px;
+  background: var(--bg-raised);
+  box-shadow: inset 0 0 0 1.5px var(--surface-press), var(--shadow-raised);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* 옆 버튼 (볼륨 둘, 전원 하나) */
+.phone::before,
+.phone::after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--surface-press);
+}
+.phone::before {
+  left: -3px;
+  top: 112px;
+  height: 96px;
+  background: linear-gradient(var(--surface-press) 0 42%, transparent 42% 58%, var(--surface-press) 58%);
+}
+.phone::after { right: -3px; top: 132px; height: 62px; }
+
+.phone-screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  height: 548px;
+  padding: 40px 11px 11px;
+  border-radius: 37px;
+  background: var(--bg);
+  overflow: hidden;
+}
+.island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  width: 78px;
+  height: 22px;
+  margin-left: -39px;
+  border-radius: var(--r-pill);
+  background: #000;
+}
+
+.r-bar { flex: none; display: flex; align-items: center; justify-content: space-between; min-height: 36px; padding: 0 2px; }
+.r-page { display: flex; align-items: baseline; gap: 5px; }
+.r-page b { font-size: 28px; font-weight: 300; line-height: 1; letter-spacing: var(--tracking-display); }
+.r-page span { font-size: 12px; color: var(--fg-muted); }
+.r-clock {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  background: var(--bg-raised);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 28px;
+  color: var(--fg-muted);
+}
+.r-clock.on { color: var(--fg); }
+
+.r-pad {
+  flex: none;
+  border-radius: 14px;
+  background: var(--bg-raised);
+  touch-action: none;
+  cursor: crosshair;
+}
+.r-pad.pressing .slide { opacity: 0.86; }
+.r-finger {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.r-finger[hidden] { display: none; }
+.r-finger.laser { background: radial-gradient(circle, #fff 0 15%, #ff8a80 32%, var(--laser) 55%, rgba(255, 59, 48, 0) 72%); }
+.r-finger.spotlight { width: 48px; height: 48px; margin: -24px 0 0 -24px; box-shadow: 0 0 0 2px #fff, 0 0 0 999px rgba(12, 10, 9, 0.5); }
+.r-finger.magnify { width: 40px; height: 40px; margin: -20px 0 0 -20px; border: 2.5px solid #fff; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5); }
+.r-finger.pen { width: 10px; height: 10px; margin: -5px 0 0 -5px; background: var(--pen, var(--pen-red)); }
+.r-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 18px 10px 8px;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(to top, rgba(12, 10, 9, 0.8), rgba(12, 10, 9, 0));
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.r-hint.used { opacity: 0; }
+
+/* 도구: 세그먼트 (트랙 안에서 고른 것만 떠오른다) */
+.r-tools {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  padding: 3px;
+  border-radius: 16px;
+  background: var(--bg-raised);
+}
+.r-tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 0 5px;
+  border-radius: 13px;
+  /* 작은 글자라 subtle(4.3:1) 대신 muted 로 대비를 맞춘다 */
+  color: var(--fg-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  transition: transform 0.15s var(--ease-out), background-color 0.2s, color 0.2s;
+}
+.r-tool svg { width: 19px; height: 19px; }
+.r-tool:active { transform: scale(0.96); }
+.r-tool[aria-checked='true'] { background: var(--surface); color: var(--fg); box-shadow: var(--shadow-raised); }
+.r-tool[aria-checked='true'] svg { color: var(--accent-text); }
+
+.r-pens { flex: none; display: flex; align-items: center; gap: 10px; padding: 0 3px; min-height: 28px; }
+.r-pens[hidden] { display: none; }
+.r-swatch { width: 22px; height: 22px; border-radius: 50%; transition: transform 0.15s var(--ease-out); }
+.r-swatch:active { transform: scale(0.9); }
+.swatch-red { background: var(--pen-red); }
+.swatch-yellow { background: var(--pen-yellow); }
+.swatch-blue { background: var(--pen-blue); }
+.swatch-white { background: var(--pen-white); }
+.r-swatch[aria-pressed='true'] { box-shadow: 0 0 0 2.5px var(--bg), 0 0 0 4px var(--fg); }
+.r-clear { margin-left: auto; padding: 4px 10px; border-radius: var(--r-pill); font-size: 12px; font-weight: 600; color: var(--fg-muted); }
+.r-clear:active { background: var(--surface); }
+
+/* 효과: 꾹 누르는 동안 이어진다 */
+.r-cues { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.r-cue {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--bg-raised);
+  color: var(--fg-muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  touch-action: none;
+  transition: transform 0.15s var(--ease-out), background-color 0.15s, color 0.15s;
+}
+.r-cue svg { width: 19px; height: 19px; }
+.r-cue.on { background: var(--surface); color: var(--fg); transform: scale(0.96); }
+.r-cue.on svg { color: var(--accent-text); }
+
+/* 넘기기 */
+.r-nav { flex: 1; min-height: 96px; display: flex; gap: 6px; }
+.r-nav button {
+  border-radius: 22px;
+  touch-action: manipulation;
+  transition: transform 0.15s var(--ease-out), background-color 0.15s, opacity 0.2s;
+}
+.r-nav button:active { transform: scale(0.97); }
+.r-nav button:disabled { opacity: 0.35; transform: none; cursor: default; }
+.r-prev { flex: 0 0 31%; background: var(--bg-raised); font-size: 14px; font-weight: 600; color: var(--fg-muted); }
+.r-prev:active { background: var(--surface); }
+.r-next {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: var(--surface);
+}
+.r-next:active { background: var(--surface-press); }
+.r-thumb { width: 74%; border-radius: var(--r-sm); opacity: 0.9; pointer-events: none; }
+.r-thumb[hidden] { display: none; }
+.r-next-label { font-size: 22px; font-weight: 300; letter-spacing: var(--tracking-display); line-height: 1.1; }
+.r-next.last .r-next-label { font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--fg-muted); }
+
+.stage-caption {
+  position: relative;
+  z-index: 1;
+  margin-top: 28px;
+  color: var(--fg-muted);
+  font-size: 0.9375rem;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* ---------- 배치 ---------- */
+
+/* 좁은 화면: 폰을 조작하는 동안 청중 화면이 위에 붙어 있게 */
+@media (max-width: 1023px) {
+  .screen-wrap {
+    position: sticky;
+    top: 10px;
+    z-index: 3;
+    max-width: 720px;
+  }
+}
+
+/* 넓은 화면: 청중 화면 오른쪽 아래에 폰이 겹쳐 선다 */
+@media (min-width: 1024px) {
+  .stage-grid {
+    grid-template-columns: minmax(0, 1fr) 292px;
+    align-items: end;
+    gap: 0;
+    padding-bottom: 8px;
+  }
+  .screen-wrap { margin-bottom: 64px; }
+  .phone { margin-left: -72px; }
+  .stage-caption { text-align: left; margin-top: 20px; max-width: 34rem; }
+}
+
+@supports (corner-shape: squircle) {
+  .phone { border-radius: 64px; }
+  .phone-screen { border-radius: 52px; }
+}

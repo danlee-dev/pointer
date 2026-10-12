@@ -1,0 +1,339 @@
+---
+// 기능: 크게 보여 줄 넷(발표자 보기, 도구, 아이폰, 효과)은 그림과 함께 한 줄씩, 나머지는 글로만 묶는다.
+import Phrases from './Phrases.astro';
+import Slide from './Slide.astro';
+import Icon from './Icon.astro';
+import EffectsBoard from './EffectsBoard.astro';
+import { landing, type Tool } from '../i18n/landing';
+import type { Lang } from '../site';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = landing[lang];
+const slides = t.demo.slides;
+const chart = slides[2]!;
+const tools: Tool[] = ['laser', 'spotlight', 'magnify', 'pen'];
+---
+
+<section class="section features" id="features" aria-label={lang === 'ko' ? '기능' : 'Features'}>
+  <div class="wrap">
+    <!-- 발표자 보기 -->
+    <article class="feature" data-reveal>
+      <div class="feature-text">
+        <h2 class="h3"><Phrases text={t.presenter.title} /></h2>
+        <p class="body-copy">{t.presenter.body}</p>
+      </div>
+      <div class="pv-scene" aria-hidden="true">
+        <figure class="pv-projector">
+          <figcaption>{t.presenter.projector}</figcaption>
+          <div class="pv-proj-frame" data-theme="dark">
+            <div class="slide-host pv-proj-screen"><Slide slide={chart} index={2} /></div>
+          </div>
+        </figure>
+        <figure class="pv-laptop">
+          <div class="pv-window" data-theme="dark">
+            <div class="pv-top">
+              <span class="pv-live"><i class="dot"></i>{t.presenter.live}</span>
+              <span class="pv-clock num">12:48</span>
+            </div>
+            <div class="pv-main">
+              <div class="slide-host pv-cur"><Slide slide={chart} index={2} /></div>
+              <div class="pv-side">
+                <p class="pv-label">{t.presenter.next}</p>
+                <div class="slide-host pv-next"><Slide slide={slides[3]!} index={3} /></div>
+                <p class="pv-notes">{t.presenter.notes}</p>
+              </div>
+            </div>
+            <div class="pv-strip">
+              {
+                slides.map((s, i) => (
+                  <div class:list={['slide-host', 'pv-thumb', { on: i === 2 }]}>
+                    <Slide slide={s} index={i} />
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+          <div class="pv-base"></div>
+          <figcaption>{t.presenter.laptop}</figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <!-- 폰 도구 넷 -->
+    <article class="feature feature-tools" data-reveal>
+      <div class="feature-text">
+        <h2 class="h3"><Phrases text={t.tools.title} /></h2>
+        <p class="body-copy">{t.tools.body}</p>
+      </div>
+      <ul class="tool-grid">
+        {
+          tools.map((k) => (
+            <li class="tool-fig">
+              <div class="slide-host tool-shot" aria-hidden="true">
+                <Slide slide={chart} index={2} />
+                {k === 'laser' && (
+                  <>
+                    <span class="fx-trail" />
+                    <span class="fx-laser" />
+                  </>
+                )}
+                {k === 'spotlight' && <span class="fx-spot" />}
+                {k === 'magnify' && (
+                  <span class="fx-lens">
+                    <span class="fx-lens-host slide-host">
+                      <Slide slide={chart} index={2} />
+                    </span>
+                  </span>
+                )}
+                {k === 'pen' && (
+                  <svg class="fx-pen" viewBox="0 0 160 90" preserveAspectRatio="none">
+                    <path d="M128 22c-9-4-17 3-17 14 0 18 4 38 13 40 10 2 16-14 15-31-1-12-6-21-13-23" />
+                    <path d="M103 82c10 1 24 0 34-2" />
+                  </svg>
+                )}
+              </div>
+              <p class="tool-name">
+                <Icon name={k} />
+                {t.demo.tool[k]}
+              </p>
+              <p class="tool-hint">{t.tools.hint[k]}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </article>
+
+    <!-- 아이폰 -->
+    <article class="feature feature-flip" data-reveal>
+      <div class="feature-text">
+        <h2 class="h3"><Phrases text={t.iphone.title} /></h2>
+        <p class="body-copy">{t.iphone.body}</p>
+        <p class="body-copy"><strong>{t.iphone.air}.</strong> {t.iphone.airBody}</p>
+      </div>
+      <div class="iphone-art" aria-hidden="true">
+        <svg class="vol" viewBox="14 6 290 330">
+          <g data-theme="dark">
+            <rect class="ip-body" x="118" y="14" width="150" height="312" rx="38" />
+            <rect class="ip-screen" x="126" y="22" width="134" height="296" rx="31" />
+            <rect class="ip-island" x="170" y="32" width="46" height="13" rx="6.5" />
+            <rect class="ip-key ip-up" x="113" y="98" width="5" height="40" rx="2.5" />
+            <rect class="ip-key ip-down" x="113" y="146" width="5" height="40" rx="2.5" />
+            <text class="ip-page" x="138" y="78">3</text>
+            <text class="ip-page-sub" x="156" y="78">/ 5</text>
+            <rect class="ip-pad" x="136" y="92" width="114" height="64" rx="9" />
+            <rect class="ip-bar" x="146" y="132" width="10" height="16" rx="1.5" />
+            <rect class="ip-bar" x="160" y="126" width="10" height="22" rx="1.5" />
+            <rect class="ip-bar" x="174" y="120" width="10" height="28" rx="1.5" />
+            <rect class="ip-bar" x="188" y="114" width="10" height="34" rx="1.5" />
+            <rect class="ip-bar on" x="202" y="104" width="10" height="44" rx="1.5" />
+            <rect class="ip-tile" x="136" y="166" width="114" height="34" rx="10" />
+            <rect class="ip-tile" x="136" y="208" width="34" height="98" rx="13" />
+            <rect class="ip-tile strong" x="176" y="208" width="74" height="98" rx="13" />
+            <text class="ip-next" x="213" y="262" text-anchor="middle">{t.iphone.up}</text>
+          </g>
+          <path class="ip-lead" d="M108 118H78M108 166H78" />
+          <text class="ip-callout" x="70" y="124" text-anchor="end">+ {t.iphone.up}</text>
+          <text class="ip-callout" x="70" y="172" text-anchor="end">− {t.iphone.down}</text>
+          <path class="ip-buzz" d="M280 120c6 10 6 26 0 36M290 112c9 14 9 38 0 52" />
+        </svg>
+        <svg class="air" viewBox="10 14 280 326">
+          <defs>
+            <radialGradient id="air-laser">
+              <stop offset="0" stop-color="#fff" />
+              <stop offset="0.25" stop-color="#ff8a80" />
+              <stop offset="0.5" style="stop-color: var(--laser)" />
+              <stop offset="1" style="stop-color: var(--laser)" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <rect class="air-screen" x="20" y="24" width="260" height="146" rx="10" />
+          <rect class="air-paper" x="27" y="31" width="246" height="132" rx="4" />
+          <path class="air-path" d="M70 120C110 60 170 54 230 92" />
+          <circle class="air-dot" r="13" fill="url(#air-laser)" cx="0" cy="0" />
+          <g class="air-phone" data-theme="dark">
+            <rect class="ip-body" x="112" y="206" width="76" height="126" rx="18" />
+            <rect class="ip-screen" x="117" y="211" width="66" height="116" rx="14" />
+            <rect class="ip-pad" x="123" y="226" width="54" height="32" rx="5" />
+          </g>
+          <path class="air-arc" d="M96 230c-10 24-8 52 6 72M204 230c10 24 8 52-6 72" />
+        </svg>
+      </div>
+    </article>
+
+    <!-- 효과 -->
+    <article class="feature-effects" data-reveal>
+      <div class="feature-text narrow">
+        <h2 class="h3"><Phrases text={t.effects.title} /></h2>
+        <p class="body-copy">{t.effects.body}</p>
+      </div>
+      <EffectsBoard lang={lang} />
+    </article>
+
+    <!-- 나머지는 글로 -->
+    <ul class="more" data-reveal>
+      {
+        t.more.map((m) => (
+          <li>
+            <p>
+              <strong>{m.lead}</strong> {m.rest}
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .features .wrap { display: grid; gap: clamp(112px, 14vw, 176px); }
+
+  .feature { display: grid; gap: clamp(32px, 5vw, 48px); align-items: center; }
+  .feature-text { display: grid; gap: 18px; align-content: start; max-width: 32rem; }
+  .feature-text.narrow { max-width: 40rem; }
+  .feature-text strong { color: var(--fg); font-weight: 600; }
+  @media (min-width: 960px) {
+    .feature { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 72px; }
+    .feature-flip { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); }
+    .feature-flip .feature-text { order: 2; }
+    .feature-tools { grid-template-columns: 1fr; gap: 48px; }
+    .feature-tools .feature-text { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 72px; max-width: none; align-items: start; }
+  }
+
+  /* ---------- 발표자 보기 ---------- */
+  .pv-scene { position: relative; padding-top: 27%; }
+  .pv-scene figcaption { margin-top: 10px; font-size: 0.8125rem; color: var(--fg-muted); text-align: center; }
+  .pv-projector figcaption { margin: 0 0 8px; text-align: right; }
+  .pv-projector { position: absolute; top: 0; right: 0; width: 46%; }
+  .pv-proj-frame { padding: 5px; border-radius: var(--r-sm); background: var(--screen-black); box-shadow: var(--shadow-raised); }
+  .pv-proj-screen { border-radius: 4px; }
+  .pv-laptop { position: relative; width: 88%; container-type: inline-size; }
+  .pv-window {
+    display: grid;
+    gap: 2.2cqw;
+    padding: 3cqw;
+    border-radius: var(--r-md) var(--r-md) 4px 4px;
+    background: var(--bg);
+    box-shadow: inset 0 0 0 1px var(--surface), var(--shadow-raised);
+  }
+  .pv-top { display: flex; justify-content: space-between; align-items: center; }
+  .pv-live { display: inline-flex; align-items: center; gap: 1.2cqw; font-size: 2.2cqw; font-weight: 600; }
+  .pv-live .dot { width: 1.4cqw; height: 1.4cqw; border-radius: 50%; background: var(--live); }
+  .pv-clock { font-size: 4.6cqw; font-weight: 300; letter-spacing: var(--tracking-display); line-height: 1; }
+  .pv-main { display: grid; grid-template-columns: 1.7fr 1fr; gap: 2.2cqw; align-items: start; }
+  .pv-cur, .pv-next, .pv-thumb { border-radius: 1cqw; }
+  .pv-side { display: grid; gap: 1.2cqw; }
+  .pv-label { font-size: 1.8cqw; color: var(--fg-muted); font-weight: 600; }
+  .pv-notes {
+    margin-top: 0.8cqw;
+    padding: 1.6cqw;
+    border-radius: 1.2cqw;
+    background: var(--bg-raised);
+    font-size: 1.9cqw;
+    line-height: 1.5;
+  }
+  .pv-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1.2cqw; }
+  .pv-thumb { opacity: 0.72; }
+  .pv-thumb.on { opacity: 1; box-shadow: 0 0 0 0.4cqw var(--bg), 0 0 0 0.8cqw var(--fg); }
+  .pv-base {
+    height: 10px;
+    margin: 0 -5%;
+    border-radius: 0 0 14px 14px;
+    background: linear-gradient(var(--surface-press), var(--bg-raised));
+  }
+
+  /* ---------- 도구 넷 ---------- */
+  .tool-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 16px; }
+  @media (min-width: 960px) { .tool-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; } }
+  .tool-shot { border-radius: var(--r-md); box-shadow: var(--shadow-raised); }
+  .tool-name { display: flex; align-items: center; gap: 8px; margin-top: 16px; font-weight: 600; }
+  .tool-name svg { width: 18px; height: 18px; color: var(--accent-text); }
+  .tool-hint { margin-top: 4px; font-size: 0.9375rem; color: var(--fg-muted); line-height: 1.55; }
+
+  .fx-laser {
+    position: absolute;
+    left: 77.5%;
+    top: 31%;
+    width: 7cqw;
+    height: 7cqw;
+    margin: -3.5cqw 0 0 -3.5cqw;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff 0 9%, #ff8a80 20%, var(--laser) 34%, rgba(255, 59, 48, 0.22) 55%, rgba(255, 59, 48, 0) 72%);
+  }
+  .fx-trail {
+    position: absolute;
+    left: 58%;
+    top: 42%;
+    width: 20%;
+    height: 1.4cqw;
+    border-radius: 1cqw;
+    transform-origin: 100% 50%;
+    transform: translateY(-50%) rotate(-30deg);
+    background: linear-gradient(90deg, rgba(255, 59, 48, 0), rgba(255, 59, 48, 0.45));
+  }
+  .fx-spot {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 79% 52%, transparent 0 13cqw, rgba(0, 0, 0, 0.74) calc(13cqw + 1px));
+  }
+  .fx-lens {
+    position: absolute;
+    left: 55cqw;
+    top: 16cqw;
+    width: 30cqw;
+    height: 30cqw;
+    border-radius: 50%;
+    overflow: hidden;
+    box-shadow: 0 0 0 0.8cqw #fff, 0 2cqw 5cqw rgba(0, 0, 0, 0.35);
+  }
+  .fx-lens-host {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100cqw;
+    transform-origin: 0 0;
+    transform: translate(-125cqw, -47cqw) scale(2);
+  }
+  .fx-pen { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .fx-pen path { fill: none; stroke: var(--pen-red); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+
+  /* ---------- 아이폰 ---------- */
+  .iphone-art { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: clamp(16px, 3vw, 32px); border-radius: var(--r-xl); background: var(--bg-raised); }
+  .iphone-art svg { width: 100%; height: auto; }
+  .ip-body { fill: var(--bg-raised); stroke: var(--surface-press); stroke-width: 1.5; }
+  .ip-screen { fill: var(--bg); }
+  .ip-island { fill: #000; }
+  .ip-key { fill: var(--surface-press); }
+  .ip-page { fill: var(--fg); font-family: var(--font); font-size: 24px; font-weight: 300; }
+  .ip-page-sub { fill: var(--fg-muted); font-family: var(--font); font-size: 11px; }
+  .ip-pad { fill: var(--slide-paper); }
+  .ip-bar { fill: var(--slide-soft); }
+  .ip-bar.on { fill: var(--slide-ink); }
+  .ip-tile { fill: var(--bg-raised); }
+  .ip-tile.strong { fill: var(--surface); }
+  .ip-next { fill: var(--fg); font-family: var(--font); font-size: 17px; font-weight: 300; }
+  .ip-lead { stroke: var(--fg-subtle); stroke-width: 1.2; stroke-dasharray: 2 4; stroke-linecap: round; }
+  .ip-callout { fill: var(--fg); font-family: var(--font); font-size: 19px; font-weight: 600; }
+  .ip-buzz { fill: none; stroke: var(--fg-muted); stroke-width: 2; stroke-linecap: round; }
+  .air-screen { fill: var(--screen-black); }
+  .air-paper { fill: var(--slide-paper); }
+  .air-path { fill: none; stroke: var(--laser); stroke-width: 2; stroke-dasharray: 2 6; stroke-linecap: round; opacity: 0.55; }
+  .air-dot { offset-path: path('M70 120C110 60 170 54 230 92'); offset-rotate: 0deg; offset-distance: 100%; }
+  .air-arc { fill: none; stroke: var(--fg-muted); stroke-width: 2; stroke-linecap: round; }
+  .air-phone { transform-box: fill-box; transform-origin: 50% 100%; transform: rotate(-8deg); }
+  @media (prefers-reduced-motion: no-preference) {
+    .air-dot { animation: air-dot 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; }
+    .air-phone { animation: air-tilt 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate; }
+    .ip-up { animation: press 2.4s var(--ease-out) infinite; }
+  }
+  @keyframes air-dot { from { offset-distance: 0%; } to { offset-distance: 100%; } }
+  @keyframes air-tilt { from { transform: rotate(-9deg); } to { transform: rotate(9deg); } }
+  @keyframes press { 0%, 70%, 100% { transform: none; } 78% { transform: translateX(2.5px); } }
+
+  /* ---------- 나머지 ---------- */
+  .more { display: grid; gap: 28px 64px; }
+  @media (min-width: 760px) { .more { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .more p { font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem); line-height: 1.6; color: var(--fg-muted); text-wrap: pretty; }
+  .more strong { color: var(--fg); font-weight: 600; }
+</style>

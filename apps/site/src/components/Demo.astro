@@ -1,0 +1,129 @@
+---
+// 첫 화면 데모: 위는 청중 화면, 아래(넓은 화면에선 오른쪽)는 폰 리모컨.
+// 폰 패드를 누른 채 움직이면 레이저·스포트라이트·돋보기·펜이 청중 화면에 나타나고, 다음을 누르면 장이 넘어간다.
+// 폰과 청중 화면 모형은 페이지 테마와 상관없이 어둡게 고정한다 (DESIGN.md).
+import Slide from './Slide.astro';
+import Icon from './Icon.astro';
+import { landing, type Cue, type Tool } from '../i18n/landing';
+import type { Lang } from '../site';
+import '../styles/demo.css';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = landing[lang];
+const slides = t.demo.slides;
+const tools: Tool[] = ['laser', 'spotlight', 'magnify', 'pen'];
+const phoneCues: Cue[] = ['confetti', 'drumroll', 'correct'];
+const pens = ['red', 'yellow', 'blue', 'white'] as const;
+const allCues = Object.keys(t.cue) as Cue[];
+const sounds = Object.fromEntries(allCues.map((c) => [c, t.demo.sound(t.cue[c])]));
+---
+
+<div class="stage" data-demo data-sounds={JSON.stringify(sounds)} data-next={t.demo.next} data-last={t.demo.last}>
+  <div class="orbs" aria-hidden="true">
+    <span class="orb orb-mint"></span>
+    <span class="orb orb-lavender"></span>
+    <span class="orb orb-peach"></span>
+  </div>
+
+  <div class="stage-grid" role="group" aria-label={t.demo.label}>
+    <div class="screen-wrap" data-theme="dark">
+      <div class="monitor">
+        <div class="screen slide-host" data-screen>
+          {slides.map((s, i) => <Slide slide={s} index={i} hidden={i !== 0} />)}
+          <canvas class="layer" data-ink aria-hidden="true"></canvas>
+          <div class="layer spot" data-spot hidden></div>
+          <div class="lens" data-lens hidden>
+            <div class="lens-host slide-host" data-lens-host></div>
+          </div>
+          <canvas class="layer" data-laser aria-hidden="true"></canvas>
+          <canvas class="layer" data-cues aria-hidden="true"></canvas>
+          <p class="cue-sound" data-sound hidden aria-live="polite">
+            <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span data-sound-text></span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone" data-theme="dark">
+      <div class="phone-screen">
+        <span class="island" aria-hidden="true"></span>
+        <div class="r-bar">
+          <p class="r-page num" aria-live="polite"><b data-page>1</b><span>/ {slides.length}</span></p>
+          <p class="r-clock num" data-clock>0:00</p>
+        </div>
+
+        <div class="r-pad slide-host" data-pad>
+          {slides.map((s, i) => <Slide slide={s} index={i} hidden={i !== 0} />)}
+          <canvas class="layer" data-pad-ink aria-hidden="true"></canvas>
+          <span class="r-finger" data-finger hidden></span>
+          <p class="r-hint" data-hint>{t.demo.hint.laser}</p>
+        </div>
+
+        <div class="r-tools" role="radiogroup" aria-label={lang === 'ko' ? '도구' : 'Tools'}>
+          {
+            tools.map((k) => (
+              <button
+                type="button"
+                class="r-tool"
+                role="radio"
+                aria-checked={k === 'laser' ? 'true' : 'false'}
+                data-tool={k}
+                data-hint={t.demo.hint[k]}
+              >
+                <Icon name={k} />
+                <span>{t.demo.tool[k]}</span>
+              </button>
+            ))
+          }
+        </div>
+
+        <div class="r-pens" data-pens hidden>
+          {
+            pens.map((c, i) => (
+              <button
+                type="button"
+                class={`r-swatch swatch-${c}`}
+                data-pen={c}
+                aria-label={t.demo.pens[c]}
+                aria-pressed={i === 0 ? 'true' : 'false'}
+              />
+            ))
+          }
+          <button type="button" class="r-clear" data-clear>{t.demo.clear}</button>
+        </div>
+
+        <div class="r-cues">
+          {
+            phoneCues.map((c) => (
+              <button type="button" class="r-cue" data-cue={c}>
+                <Icon name={c} />
+                <span>{t.cue[c]}</span>
+              </button>
+            ))
+          }
+        </div>
+
+        <div class="r-nav">
+          <button type="button" class="r-prev" data-prev disabled>{t.demo.prev}</button>
+          <button type="button" class="r-next" data-next-btn>
+            <span class="r-thumb slide-host" data-next-thumb aria-hidden="true">
+              {slides.map((s, i) => <Slide slide={s} index={i} hidden={i !== 1} />)}
+            </span>
+            <span class="r-next-label" data-next-label>{t.demo.next}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="stage-caption">{t.hero.caption}</p>
+</div>
+
+<script>
+  import { initDemo } from '../scripts/demo';
+  document.querySelectorAll<HTMLElement>('[data-demo]').forEach(initDemo);
+</script>

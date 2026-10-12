@@ -1,0 +1,97 @@
+---
+import Base from '../layouts/Base.astro';
+import { privacy } from '../i18n/privacy';
+import { site, type Lang } from '../site';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = privacy[lang];
+---
+
+<Base lang={lang} path="/privacy" title={t.meta.title} description={t.meta.description}>
+  <article class="doc wrap">
+    <header class="doc-head">
+      <h1 class="h2">{t.title}</h1>
+      <p class="doc-meta num"><time datetime={site.privacyEffective}>{t.effective(site.privacyEffective)}</time></p>
+      <p class="lead policy-intro">{t.intro}</p>
+    </header>
+
+    <div class="policy">
+      <nav class="policy-toc" aria-label={lang === 'ko' ? '목차' : 'Contents'}>
+        <ol>
+          {
+            t.sections.map((s) => (
+              <li>
+                <a href={`#${s.id}`}>{s.h}</a>
+              </li>
+            ))
+          }
+        </ol>
+      </nav>
+      <div class="policy-body">
+        {
+          t.sections.map((s) => (
+            <section id={s.id} aria-labelledby={`${s.id}-h`}>
+              <h2 id={`${s.id}-h`}>{s.h}</h2>
+              {s.p?.map((para) => <p>{para}</p>)}
+              {s.list && (
+                <ul>
+                  {s.list.map((li) => (
+                    <li>{li}</li>
+                  ))}
+                </ul>
+              )}
+              {s.link && (
+                <p>
+                  <a class="text-link" href={s.link.href} rel="noopener">
+                    {s.link.label}
+                  </a>
+                </p>
+              )}
+            </section>
+          ))
+        }
+      </div>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .policy-intro { color: var(--fg); }
+  .policy { margin-top: clamp(40px, 6vw, 72px); display: grid; gap: 40px; }
+  .policy-toc { display: none; }
+  @media (min-width: 960px) {
+    .policy { grid-template-columns: 240px minmax(0, 1fr); gap: 72px; }
+    .policy-toc { display: block; position: sticky; top: 32px; align-self: start; }
+  }
+  .policy-toc ol { display: grid; gap: 2px; }
+  .policy-toc a {
+    display: block;
+    padding: 6px 12px;
+    margin-left: -12px;
+    border-radius: var(--r-sm);
+    color: var(--fg-muted);
+    font-size: 0.9375rem;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .policy-toc a:hover { background: var(--surface); color: var(--fg); }
+  .policy-body { display: grid; gap: 44px; max-width: 42rem; }
+  .policy-body section { display: grid; gap: 14px; scroll-margin-top: 24px; }
+  .policy-body h2 { font-size: 1.375rem; font-weight: 600; letter-spacing: var(--tracking-title); }
+  .policy-body p, .policy-body li { color: var(--fg-muted); line-height: 1.75; font-size: 1.0625rem; }
+  .policy-body ul { display: grid; gap: 10px; }
+  .policy-body li { position: relative; padding-left: 20px; }
+  .policy-body li::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 0.78em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fg-muted);
+  }
+  #summary li { color: var(--fg); }
+</style>

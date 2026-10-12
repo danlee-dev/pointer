@@ -1,0 +1,75 @@
+/* 데모 속 예시 슬라이드. 단위는 전부 cqw (감싸는 칸 너비의 1%) 라서 큰 화면·폰 패드·썸네일에서 같은 모양으로 줄어든다.
+   감싸는 칸에는 .slide-host 를 붙인다. */
+
+.slide-host {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  container-type: inline-size;
+  overflow: hidden;
+  background: var(--slide-paper);
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 7cqw 8cqw;
+  background: var(--slide-paper);
+  color: var(--slide-ink);
+  font-family: var(--font);
+  line-height: 1.2;
+  letter-spacing: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.slide[hidden] { display: none; }
+.slide p { margin: 0; }
+
+.s-small { font-size: 1.9cqw; color: var(--slide-muted); font-variant-numeric: tabular-nums; }
+.s-sub { margin-top: 2.4cqw; font-size: 2.5cqw; color: var(--slide-muted); line-height: 1.45; max-width: 70%; }
+
+.slide-title { justify-content: flex-end; }
+.slide-title .s-small { position: absolute; top: 7cqw; left: 8cqw; }
+.s-hero { font-size: 10cqw; font-weight: 300; letter-spacing: -0.035em; line-height: 1.02; }
+
+.slide-statement { justify-content: center; }
+.s-statement { font-size: 5.6cqw; font-weight: 300; letter-spacing: -0.03em; line-height: 1.22; max-width: 78%; }
+
+.s-title { font-size: 3.4cqw; font-weight: 600; letter-spacing: -0.02em; }
+
+.s-chart {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 3.2cqw;
+  margin-top: 4cqw;
+  padding-bottom: 0.4cqw;
+  border-bottom: 0.25cqw solid var(--slide-soft);
+}
+.s-bar {
+  flex: 1;
+  border-radius: 0.9cqw 0.9cqw 0 0;
+  background: var(--slide-line);
+}
+.s-bar.on { background: var(--slide-ink); }
+
+.s-three {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: end;
+  gap: 3cqw;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.s-three li { display: flex; flex-direction: column; gap: 1.2cqw; }
+.s-n { font-size: 9cqw; font-weight: 300; line-height: 1; color: var(--slide-soft); font-variant-numeric: tabular-nums; }
+.s-word { font-size: 3.4cqw; font-weight: 600; }
+
+.slide-end { justify-content: center; align-items: center; text-align: center; }
+.slide-end .s-sub { max-width: none; }
+.s-end { font-size: 9cqw; font-weight: 300; letter-spacing: -0.035em; }

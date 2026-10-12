@@ -15,3 +15,7 @@ apps/desktop/native/bin/
 apps/mobile/ios/
 apps/mobile/android/
 apps/mobile/.expo/
+
+# Astro 가 만드는 타입·개발 로그, Vercel 연결 정보
+.astro/
+.vercel/

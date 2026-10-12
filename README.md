@@ -19,6 +19,7 @@
 ```
 apps/desktop          Electron 앱 (main / preload / renderer)
 apps/mobile           iOS 앱 (Expo 개발 빌드)
+apps/site             홈페이지 (Astro 정적 사이트: 소개, 개인정보 처리방침, 지원)
 packages/remote-web   폰 웹 리모컨. 데스크톱 앱이 4747 포트에서 내려준다
 packages/remote-core  폰 쪽 연결 코드 (웹 리모컨과 iOS 앱이 같이 쓴다)
 packages/protocol     폰 <-> 데스크톱 메시지, 연결 주소, 타이머 계산
@@ -60,6 +61,17 @@ pnpm --filter @pointer/mobile ios
 
 실제 아이폰: `apps/mobile/ios/pointer.xcworkspace` 를 Xcode 로 열고 Signing 에서 팀을 고른 뒤 폰을 골라 실행.
 볼륨 버튼과 에어 포인터는 시뮬레이터에 버튼·자이로가 없어서 실제 폰에서만 확인할 수 있다.
+
+## 홈페이지
+
+```bash
+pnpm --filter @pointer/site dev      # http://localhost:5180
+pnpm --filter @pointer/site build    # apps/site/dist
+```
+
+제품 이름, 다운로드·App Store 주소, GitHub, 문의 창구는 `apps/site/src/site.ts` 한 곳에 있다.
+링크가 `null` 이면 화면에 "준비 중" 으로 나온다. 공유 이미지(og.png)는
+`node apps/site/scripts/build-og.mjs <@resvg/resvg-js 가 있는 node_modules>` 로 다시 만든다.
 
 ## 검사
 

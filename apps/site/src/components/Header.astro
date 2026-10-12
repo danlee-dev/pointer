@@ -1,0 +1,26 @@
+---
+import logo from '../../../../brand/logo/full-ui.svg?raw';
+import { localePath, type Lang } from '../site';
+import { common } from '../i18n/common';
+
+interface Props {
+  lang: Lang;
+  path: '/' | '/privacy' | '/support';
+}
+const { lang, path } = Astro.props;
+const t = common[lang];
+const other: Lang = lang === 'ko' ? 'en' : 'ko';
+// 워드마크 SVG 의 접근성 이름은 링크가 대신 갖는다
+const mark = logo.replace(/\srole="img"\saria-label="[^"]*"/, ' aria-hidden="true" focusable="false"');
+---
+
+<header class="site-header">
+  <div class="wrap header-row">
+    <a class="logo" href={localePath(lang, '/')} aria-label={t.nav.home} set:html={mark} />
+    <nav class="nav" aria-label={lang === 'ko' ? '사이트' : 'Site'}>
+      <a class="nav-wide" href={path === '/' ? '#features' : `${localePath(lang, '/')}#features`}>{t.nav.features}</a>
+      <a href={localePath(lang, '/support')} aria-current={path === '/support' ? 'page' : undefined}>{t.nav.support}</a>
+      <a href={localePath(other, path)} hreflang={other} lang={other} aria-label={t.switchLabel}>{t.switchTo}</a>
+    </nav>
+  </div>
+</header>

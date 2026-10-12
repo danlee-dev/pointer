@@ -1,0 +1,69 @@
+---
+// 데모용 예시 발표 자료 한 장. 크기는 감싸는 칸(container)의 너비를 따른다 (cqw).
+// 같은 장을 청중 화면, 폰 패드, 썸네일에 여러 번 그리므로 전부 aria-hidden.
+import type { SlideCopy } from '../i18n/landing';
+import '../styles/slides.css';
+
+interface Props {
+  slide: SlideCopy;
+  index: number;
+  hidden?: boolean;
+}
+const { slide, index, hidden = false } = Astro.props;
+const bars = [24, 31, 38, 49, 63, 86];
+---
+
+<div class={`slide slide-${slide.kind}`} data-slide={index} hidden={hidden} aria-hidden="true">
+  {
+    slide.kind === 'title' && (
+      <>
+        <p class="s-small">2026</p>
+        <p class="s-hero">{slide.title}</p>
+        <p class="s-sub">{slide.sub}</p>
+      </>
+    )
+  }
+  {
+    slide.kind === 'statement' && (
+      <>
+        <p class="s-statement">{slide.title}</p>
+        <p class="s-sub">{slide.sub}</p>
+      </>
+    )
+  }
+  {
+    slide.kind === 'chart' && (
+      <>
+        <p class="s-title">{slide.title}</p>
+        <div class="s-chart">
+          {bars.map((h, i) => (
+            <span class={i === bars.length - 1 ? 's-bar on' : 's-bar'} style={`height:${h}%`} />
+          ))}
+        </div>
+      </>
+    )
+  }
+  {
+    slide.kind === 'three' && (
+      <>
+        <p class="s-title">{slide.title}</p>
+        <ol class="s-three">
+          {slide.items?.map((item, i) => (
+            <li>
+              <span class="s-n">{i + 1}</span>
+              <span class="s-word">{item}</span>
+            </li>
+          ))}
+        </ol>
+      </>
+    )
+  }
+  {
+    slide.kind === 'end' && (
+      <>
+        <p class="s-end">{slide.title}</p>
+        <p class="s-sub">{slide.sub}</p>
+      </>
+    )
+  }
+</div>

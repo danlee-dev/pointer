@@ -1,0 +1,110 @@
+---
+// 효과 일곱 개를 직접 눌러 보는 판. 컴퓨터에서는 키(C D A R M O X)를 누르고 있어도 된다.
+import Slide from './Slide.astro';
+import { landing, type Cue } from '../i18n/landing';
+import { CUE_KEYS } from '../scripts/cues';
+import type { Lang } from '../site';
+import '../styles/demo.css';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const t = landing[lang];
+const keyOf = Object.fromEntries(Object.entries(CUE_KEYS).map(([k, c]) => [c, k.toUpperCase()])) as Record<Cue, string>;
+const cues = Object.keys(t.cue) as Cue[];
+const sounds = Object.fromEntries(cues.map((c) => [c, t.demo.sound(t.cue[c])]));
+const end = t.demo.slides[4]!;
+---
+
+<div class="board" data-board data-sounds={JSON.stringify(sounds)}>
+  <div class="board-screen" data-theme="dark">
+    <div class="monitor">
+      <div class="screen slide-host">
+        <Slide slide={end} index={4} />
+        <canvas class="layer" data-cues aria-hidden="true"></canvas>
+        <p class="cue-sound" data-sound hidden aria-live="polite">
+          <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span data-sound-text></span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <p class="board-try">
+    <span class="when-fine">{t.effects.try}</span>
+    <span class="when-coarse">{t.effects.tryTouch}</span>
+  </p>
+  <div class="keys" role="group" aria-label={t.effects.title.join(' ')}>
+    {
+      cues.map((c) => (
+        <button type="button" class="key" data-cue={c} aria-keyshortcuts={keyOf[c]}>
+          <span class="key-cap num">{keyOf[c]}</span>
+          <span class="key-name">{t.cue[c]}</span>
+          <i class="key-dot" aria-hidden="true" />
+        </button>
+      ))
+    }
+  </div>
+  <p class="board-silent">{t.effects.silent}</p>
+</div>
+
+<script>
+  import { initBoard } from '../scripts/board';
+  document.querySelectorAll<HTMLElement>('[data-board]').forEach(initBoard);
+</script>
+
+<style>
+  .board { margin-top: clamp(32px, 5vw, 48px); display: grid; justify-items: center; }
+  .board-screen { width: 100%; max-width: 760px; }
+  .board-try { margin-top: 32px; font-weight: 600; text-align: center; text-wrap: balance; }
+  .when-coarse { display: none; }
+  @media (pointer: coarse) {
+    .when-fine { display: none; }
+    .when-coarse { display: inline; }
+  }
+  .keys {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    max-width: 360px;
+  }
+  @media (min-width: 640px) { .keys { max-width: none; gap: 12px; } }
+  .key {
+    position: relative;
+    width: 76px;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 2px;
+    aspect-ratio: 1;
+    border-radius: var(--r-md);
+    background: var(--bg-raised);
+    box-shadow: inset 0 -3px 0 var(--surface-press), var(--shadow-raised);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    transition: transform 0.12s var(--ease-out), box-shadow 0.12s, background-color 0.12s;
+  }
+  .key:hover { background: var(--surface); }
+  @media (min-width: 640px) { .key { width: 84px; } }
+  .key-cap { font-size: 1.375rem; font-weight: 600; line-height: 1.1; }
+  .key-name { font-size: 0.75rem; color: var(--fg-muted); line-height: 1.2; text-align: center; padding: 0 4px; }
+  .key-dot {
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--live);
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .key.on { transform: translateY(2px); background: var(--surface); box-shadow: inset 0 -1px 0 var(--surface-press); }
+  .key.on .key-dot { opacity: 1; }
+  .board-silent { margin-top: 20px; font-size: 0.875rem; color: var(--fg-muted); text-align: center; text-wrap: balance; }
+</style>
